@@ -940,7 +940,7 @@ function card(m) {
   html += '<div class="match-teams">' +
     '<div class="team home"><span class="flag">' + flag(m.home_team_name_en) + '</span> ' + m.home_team_name_en + '</div>' +
     '<div class="score-section">' +
-      '<div class="score ' + (live?'live-score':fin?'final-score':'') + '">' + hS + '<span class="score-sep">:</span>' + aS + '</div>' +
+      (live || fin ? '<div class="score ' + (live?'live-score':fin?'final-score':'') + '">' + hS + '<span class="score-sep">:</span>' + aS + '</div>' : '<div class="score upcoming-score">\u23F3</div>') +
       (live ? '<span class="score-label">\u25BC en vivo</span>' : '') +
     '</div>' +
     '<div class="team away">' + m.away_team_name_en + ' <span class="flag">' + flag(m.away_team_name_en) + '</span></div>' +
