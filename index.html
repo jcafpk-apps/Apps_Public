@@ -182,6 +182,15 @@
     padding-bottom: 0.35rem;
     margin-bottom: 0.4rem;
   }
+  .match.next-match {
+    border-color: var(--sel);
+    background: var(--sel-dim);
+  }
+  .match.next-match .match-top {
+    border-bottom: 1px solid rgba(96,165,250,0.15);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
+  }
 
   .live-badge-bar {
     display: flex; align-items: center; gap: 0.3rem;
@@ -857,7 +866,7 @@ function render() {
     html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
     live.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (live.length) { html += '<div class="today-section live">\uD83D\uDD34 en vivo (' + live.length + ')</div>'; live.forEach(function(m) { html += card(m); }); }
     fin.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
-    upc.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m); }); }
+    upc.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m, i) { html += card(m, i === 0); }); }
     html += '</div>';
     el.innerHTML = html;
     manageLiveRefresh();
@@ -912,7 +921,7 @@ function render() {
 // ============================================================
 // MATCH CARD
 // ============================================================
-function card(m) {
+function card(m, isNext) {
   var s = status(m);
   var live = s === "live";
   var fin = s === "finished";
@@ -924,7 +933,8 @@ function card(m) {
   var str = CFG.byMatch[m.id];
   var grp = m.group ? "group " + m.group : (m.type||"").replace("group","group ");
 
-  var html = '<div class="match ' + s + '" data-match-id="' + m.id + '">' +
+  var nextCls = isNext ? ' next-match' : '';
+  var html = '<div class="match ' + s + nextCls + '" data-match-id="' + m.id + '">' +
     '<div class="match-top">' +
       '<span class="match-status ' + s + '">' + lbl + '</span>' +
       '<span class="match-meta">' +
