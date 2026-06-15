@@ -583,67 +583,6 @@
     letter-spacing: 0.04em;
   }
 
-  /* FIXTURE VIEW */
-  .fixture-grid { display: flex; flex-direction: column; gap: 0.2rem; }
-  .fixture-round-header {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem; font-weight: 700;
-    padding: 1.2rem 0 0.4rem;
-    color: var(--accent);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .fixture-round-header::before { content: '//'; color: var(--accent); opacity: 0.4; font-weight: 500; }
-  .fixture-round-header .bar { flex: 1; height: 1px; background: var(--accent); opacity: 0.15; }
-  .fixture-match {
-    display: flex; align-items: center; gap: 0.5rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    transition: all 0.15s;
-  }
-  .fixture-match:hover { background: var(--card-hover); }
-  .fixture-match.live { border-color: var(--live-border); background: var(--live-bg); }
-  .fixture-match.next-match { border-color: #22c55e; background: rgba(34,197,94,0.08); }
-  .fixture-time {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem; font-weight: 500;
-    color: var(--text-mono);
-    min-width: 2.8rem; text-align: center;
-    letter-spacing: 0.03em;
-    flex-shrink: 0;
-  }
-  .fixture-teams {
-    flex: 1;
-    display: flex; flex-direction: column; gap: 0.1rem;
-  }
-  .fixture-team {
-    display: flex; align-items: center;
-    gap: 0.3rem; font-size: 0.78rem; font-weight: 600;
-  }
-  .fixture-team.away { justify-content: flex-end; }
-  .fixture-team .flag { font-size: 0.95rem; }
-  .fixture-score {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.95rem; font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    min-width: 2.5rem; text-align: center;
-    flex-shrink: 0;
-  }
-  .fixture-score.live-score { color: var(--live); }
-  .fixture-score.scheduled-score { color: var(--text-mono); font-size: 0.75rem; font-weight: 500; }
-  .fixture-group {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.5rem; color: var(--text-mono);
-    min-width: 1.8rem; text-align: center;
-    padding: 2px 6px; border: 1px solid var(--border);
-    border-radius: 4px; letter-spacing: 0.08em;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-
   /* HIDE */
   .hidden { display: none !important; }
 </style>
@@ -663,7 +602,6 @@
     <button class="filter-btn active" data-view="today">Hoy</button>
     <button class="filter-btn" data-view="all">Todos</button>
     <button class="filter-btn" data-view="groups">Grupos</button>
-    <button class="filter-btn" data-view="fixture">Fixture</button>
     <button class="filter-btn" data-view="elim">Eliminatorias</button>
   </div>
 
@@ -1073,37 +1011,6 @@ function render() {
     return;
   }
 
-  // FIXTURE view: all matches sorted chronologically, grouped by round
-  if (curView === "fixture") {
-    var allSorted = allGames.slice().sort(function(a,b) {
-      return (a.local_date || '').localeCompare(b.local_date || '');
-    });
-    // Find global next match
-    var upcomingGlobal = allGames.filter(function(g) { return status(g) === 'scheduled'; });
-    upcomingGlobal.sort(function(a,b) { return (a.local_date || '').localeCompare(b.local_date || ''); });
-    var nextMatchId = upcomingGlobal.length ? upcomingGlobal[0].id : null;
-    // Group by round
-    var roundGrp = {};
-    allSorted.forEach(function(m) {
-      if (!m.local_date) return;
-      var r = fixtureRound(m.local_date);
-      if (!roundGrp[r]) roundGrp[r] = [];
-      roundGrp[r].push(m);
-    });
-    var rounds = Object.keys(roundGrp).sort(function(a,b){ return +a - +b; });
-    var html = '<div class="fixture-grid">';
-    rounds.forEach(function(r) {
-      html += '<div class="fixture-round-header">Semana ' + r + '<span class="bar"></span></div>';
-      roundGrp[r].forEach(function(m) {
-        html += fixtureCard(m, m.id === nextMatchId);
-      });
-    });
-    html += '</div>';
-    el.innerHTML = html;
-    manageLiveRefresh();
-    return;
-  }
-
   // OTHER views: group by day
   var grp = {};
   f.forEach(function(g) {
@@ -1165,48 +1072,6 @@ function render() {
     setupDaySections();
   }
   manageLiveRefresh();
-}
-
-// ============================================================
-// FIXTURE HELPERS
-// ============================================================
-function fixtureRound(dateStr) {
-  // Group into weeks from tournament start (June 14, 2026)
-  if (!dateStr) return 1;
-  var parts = dateStr.split(" ")[0].split("/");
-  var m = +parts[0], d = +parts[1];
-  var start = new Date(2026, 5, 14);
-  var dt = new Date(2026, m-1, d);
-  var diff = Math.floor((dt - start) / (7 * 24 * 60 * 60 * 1000));
-  return Math.max(0, diff) + 1;
-}
-
-function fixtureCard(m, isNext) {
-  var s = status(m);
-  var live = s === "live";
-  var fin = s === "finished";
-  var hS = m.home_score != null && m.home_score !== 'null' && m.home_score !== '' && m.home_score !== undefined ? m.home_score : '-';
-  var aS = m.away_score != null && m.away_score !== 'null' && m.away_score !== '' && m.away_score !== undefined ? m.away_score : '-';
-  var timeStr = matchTime(m.local_date);
-  var grp = m.group || '';
-  var nextCls = isNext ? ' next-match' : '';
-
-  var scoreHtml;
-  if (live || fin) {
-    scoreHtml = '<div class="fixture-score ' + (live ? 'live-score' : '') + '">' + hS + '<span style="color:var(--text-mono);margin:0 0.05em">:</span>' + aS + '</div>';
-  } else {
-    scoreHtml = '<div class="fixture-score scheduled-score">' + (timeStr || '\u2014') + '</div>';
-  }
-
-  return '<div class="fixture-match ' + s + nextCls + '">' +
-    '<span class="fixture-time">' + (timeStr || '\u2014') + '</span>' +
-    '<div class="fixture-teams">' +
-      '<div class="fixture-team"><span class="flag">' + flag(m.home_team_name_en) + '</span> ' + m.home_team_name_en + '</div>' +
-      '<div class="fixture-team away">' + m.away_team_name_en + ' <span class="flag">' + flag(m.away_team_name_en) + '</span></div>' +
-    '</div>' +
-    scoreHtml +
-    (grp ? '<span class="fixture-group">' + grp + '</span>' : '') +
-    '</div>';
 }
 
 // ============================================================
@@ -1506,7 +1371,7 @@ function currentViewHasLive() {
   if (curView === 'days' && curDay) {
     return allGames.some(function(g){ return status(g) === 'live' && g.local_date && g.local_date.split(" ")[0] === curDay; });
   }
-  if (curView === 'all' || curView === 'days' || curView === 'fixture') {
+  if (curView === 'all' || curView === 'days') {
     return allGames.some(function(g){ return status(g) === 'live'; });
   }
   return false;
@@ -1567,7 +1432,6 @@ function parseHash() {
   var h = location.hash.slice(1);
   if (h === 'all') { curView = 'all'; curDay = null; }
   else if (h === 'today') { curView = 'today'; curDay = null; }
-  else if (h === 'fixture') { curView = 'fixture'; curDay = null; }
   else if (h === 'elim') { curView = 'elim'; curDay = null; }
   else if (h === 'groups') { curView = 'groups'; curDay = null; }
   else if (h === 'live') { curView = 'live'; curDay = null; }
@@ -1579,7 +1443,6 @@ function syncHash() {
   var hash = '';
   if (curView === 'all') hash = '#all';
   else if (curView === 'today') hash = '#today';
-  else if (curView === 'fixture') hash = '#fixture';
   else if (curView === 'elim') hash = '#elim';
   else if (curView === 'groups') hash = '#groups';
   else if (curView === 'live') hash = '#live';
