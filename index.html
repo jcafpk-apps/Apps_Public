@@ -545,6 +545,12 @@ function status(m) {
   return "scheduled";
 }
 
+function matchTime(d) {
+  if (!d) return '';
+  var p = d.split(' ');
+  return p.length > 1 ? p[1] : '';
+}
+
 function scorers(raw) {
   if (!raw || raw === "null") return [];
   try {
@@ -871,8 +877,8 @@ function render() {
     var day = f[0]?.local_date?.split(" ")[0] || "";
     html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
     live.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (live.length) { html += '<div class="today-section live">\uD83D\uDD34 en vivo (' + live.length + ')</div>'; live.forEach(function(m) { html += card(m); }); }
-    fin.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
     upc.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m, m.id === nextMatchId); }); }
+    fin.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
     html += '</div>';
     el.innerHTML = html;
     manageLiveRefresh();
@@ -974,7 +980,7 @@ function card(m, isNext) {
   html += '<div class="match-teams">' +
     '<div class="team home"><span class="flag">' + flag(m.home_team_name_en) + '</span> ' + m.home_team_name_en + '</div>' +
     '<div class="score-section">' +
-      (live || fin ? '<div class="score ' + (live?'live-score':fin?'final-score':'') + '">' + hS + '<span class="score-sep">:</span>' + aS + '</div>' : '<div class="score upcoming-score">\u23F3</div>') +
+      (live || fin ? '<div class="score ' + (live?'live-score':fin?'final-score':'') + '">' + hS + '<span class="score-sep">:</span>' + aS + '</div>' : '<div class="score upcoming-score">' + (matchTime(m.local_date) || '\u23F3') + '</div>') +
       (live ? '<span class="score-label">\u25BC en vivo</span>' : '') +
     '</div>' +
     '<div class="team away">' + m.away_team_name_en + ' <span class="flag">' + flag(m.away_team_name_en) + '</span></div>' +
