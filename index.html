@@ -852,6 +852,12 @@ function render() {
     return;
   }
 
+  // Find global next upcoming match (across ALL games, not just filtered)
+  var nextMatchId = null;
+  var upcomingGlobal = allGames.filter(function(g) { return status(g) === 'scheduled'; });
+  upcomingGlobal.sort(function(a,b) { return (a.local_date || '').localeCompare(b.local_date || ''); });
+  if (upcomingGlobal.length) nextMatchId = upcomingGlobal[0].id;
+
   // TODAY view: group by status
   if (curView === "today") {
     var live = [], fin = [], upc = [];
@@ -866,7 +872,7 @@ function render() {
     html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
     live.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (live.length) { html += '<div class="today-section live">\uD83D\uDD34 en vivo (' + live.length + ')</div>'; live.forEach(function(m) { html += card(m); }); }
     fin.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
-    upc.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m, i) { html += card(m, i === 0); }); }
+    upc.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m, m.id === nextMatchId); }); }
     html += '</div>';
     el.innerHTML = html;
     manageLiveRefresh();
@@ -897,11 +903,29 @@ function render() {
           '<span class="match-count" style="margin-left:auto;font-size:0.5rem;color:var(--text-mono)">' + grp[day].length + '</span>' +
         '</div>' +
         '<div class="day-content">';
-      grp[day].forEach(function(m) { html += card(m); });
+      // Sort matches within day: LIVE first (by time), then FINISHED (by time), then UPCOMING (by time)
+      grp[day].sort(function(a, b) {
+        var order = { live: 0, finished: 1, scheduled: 2 };
+        var sA = status(a), sB = status(b);
+        var oA = order[sA] !== undefined ? order[sA] : 2;
+        var oB = order[sB] !== undefined ? order[sB] : 2;
+        if (oA !== oB) return oA - oB;
+        return (a.local_date || '').localeCompare(b.local_date || '');
+      });
+      grp[day].forEach(function(m) { html += card(m, m.id === nextMatchId); });
       html += '</div></div>';
     } else {
       html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
-      grp[day].forEach(function(m) { html += card(m); });
+      // Sort matches within day: LIVE first (by time), then FINISHED (by time), then UPCOMING (by time)
+      grp[day].sort(function(a, b) {
+        var order = { live: 0, finished: 1, scheduled: 2 };
+        var sA = status(a), sB = status(b);
+        var oA = order[sA] !== undefined ? order[sA] : 2;
+        var oB = order[sB] !== undefined ? order[sB] : 2;
+        if (oA !== oB) return oA - oB;
+        return (a.local_date || '').localeCompare(b.local_date || '');
+      });
+      grp[day].forEach(function(m) { html += card(m, m.id === nextMatchId); });
     }
   });
   html += '</div>';
