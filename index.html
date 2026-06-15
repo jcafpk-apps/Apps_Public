@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUNDIAL//2026 · STREAMS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #000;
+    --surface: #080808;
+    --card: #0a0a0a;
+    --card-hover: #0f0f0f;
+    --border: #1a1a1a;
+    --border-light: rgba(255,255,255,0.06);
+    --accent: #ef4444;
+    --accent-dim: rgba(239,68,68,0.1);
+    --accent-glow: rgba(239,68,68,0.06);
+    --text: #e8e8e8;
+    --text-dim: rgba(255,255,255,0.4);
+    --text-mono: rgba(255,255,255,0.25);
+    --live: #ef4444;
+    --live-bg: rgba(239,68,68,0.08);
+    --live-border: #ef4444;
+    --finished: #b91c1c;
+    --sel: #60a5fa;
+    --sel-dim: rgba(96,165,250,0.08);
+    --alt: #a78bfa;
+    --alt-dim: rgba(167,139,250,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 1rem; }
+
+  /* HEADER */
+  header {
+    padding: 1.5rem 0 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0;
+    width: 80px; height: 1px;
+    background: var(--accent);
+  }
+  .header-top {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header-left { display: flex; align-items: center; gap: 0.8rem; }
+  .header-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; font-weight: 500;
+    letter-spacing: 0.2em;
+    padding: 3px 10px;
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem; font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  header h1 .accent { color: var(--accent); }
+  header h1 .slash { color: var(--text-dim); font-weight: 400; }
+
+  /* FILTERS */
+  .filters {
+    display: flex; gap: 0.25rem;
+    padding: 0.6rem 0 0.8rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s;
+    border-radius: 6px; text-transform: uppercase;
+  }
+  .filter-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+  .filter-btn.active {
+    border-color: var(--accent); color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  /* CALENDAR */
+  .calendar {
+    display: flex; gap: 0.3rem;
+    overflow-x: auto; padding: 0 0 0.8rem;
+    scrollbar-width: none;
+  }
+  .calendar::-webkit-scrollbar { display: none; }
+  .cal-day {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+    text-align: center; white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cal-day:hover { border-color: var(--text-dim); }
+  .cal-day.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .cal-day .dow { display: block; font-size: 0.45rem; color: var(--text-mono); }
+  .cal-day .num { display: block; font-size: 0.7rem; font-weight: 700; }
+  .cal-day.today { border-color: var(--live); }
+
+  /* DAY HEADER */
+  .day-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; font-weight: 600;
+    padding: 1.2rem 0 0.3rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    display: flex; align-items: center;
+    gap: 0.5rem; text-transform: uppercase;
+  }
+  .day-header::before {
+    content: '//';
+    color: var(--accent); opacity: 0.4; font-weight: 500;
+  }
+  .day-header .date {
+    font-weight: 400; color: var(--text-mono);
+    font-size: 0.55rem; letter-spacing: 0.05em;
+  }
+
+  .match-grid { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  /* TODAY SECTION */
+  .today-section {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.4rem 0 0.15rem;
+    color: var(--text-dim);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .today-section::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .today-section.live { color: var(--live); }
+  .today-section.live::after { background: var(--live); opacity: 0.25; }
+  .today-section.finished { color: var(--finished); }
+  .today-section.finished::after { background: var(--finished); opacity: 0.15; }
+
+  /* MATCH */
+  .match {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0.7rem 0.9rem;
+    transition: all 0.15s;
+    border-radius: 8px;
+  }
+  .match:hover { background: var(--card-hover); }
+  .match.live {
+    border-color: var(--live-border);
+    background: var(--live-bg);
+  }
+  .match.live .match-top {
+    border-bottom: 1px solid rgba(239,68,68,0.15);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .live-badge-bar {
+    display: flex; align-items: center; gap: 0.3rem;
+    padding: 0.05rem 0 0.2rem;
+  }
+  .live-badge-bar .pulse-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--live);
+    animation: pulse-dot 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+    50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+  }
+  .live-badge-bar .live-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; font-weight: 700;
+    color: var(--live); letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .match-top {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 0.4rem;
+    flex-wrap: wrap; gap: 0.2rem;
+  }
+  .match-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; font-weight: 600;
+    letter-spacing: 0.12em;
+    padding: 2px 7px; border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .match-status.live { background: var(--live); color: #000; }
+  .match-status.finished {
+    background: rgba(185,28,28,0.1);
+    color: var(--finished);
+    border: 1px solid var(--finished);
+  }
+  .match-status.scheduled {
+    background: transparent; color: var(--text-mono);
+    border: 1px solid var(--border);
+  }
+  .match-meta {
+    display: flex; align-items: center;
+    gap: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; color: var(--text-mono);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .match-meta .sep { color: var(--border); opacity: 0.4; }
+  .group-badge {
+    padding: 1px 5px; border: 1px solid var(--border);
+    font-size: 0.45rem; border-radius: 3px; letter-spacing: 0.08em;
+  }
+
+  .match-teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.6rem; align-items: center;
+    margin-bottom: 0.3rem;
+  }
+  .team {
+    display: flex; align-items: center;
+    gap: 0.4rem; font-size: 0.8rem; font-weight: 600;
+  }
+  .team.home { justify-content: flex-start; }
+  .team.away { justify-content: flex-end; }
+  .team .flag { font-size: 1.1rem; }
+  .score-section {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.05rem;
+  }
+  .score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+  }
+  .score.live-score { color: var(--live); }
+  .score-sep { color: var(--text-mono); margin: 0 0.1em; }
+  .score-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.45rem; color: var(--text-mono);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .scorers-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.2rem; margin-bottom: 0.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; color: var(--text-dim);
+  }
+  .scorers-grid .home-scorers { text-align: left; }
+  .scorers-grid .away-scorers { text-align: right; }
+
+  .streams {
+    display: flex; flex-wrap: wrap;
+    gap: 0.25rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.05rem;
+  }
+  .stream-btn {
+    padding: 0.2rem 0.55rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; font-weight: 500;
+    text-decoration: none; transition: all 0.15s;
+    border: 1px solid var(--border);
+    border-radius: 6px; background: transparent;
+    display: inline-flex; align-items: center;
+    gap: 0.2rem; letter-spacing: 0.02em;
+  }
+  .stream-btn.official { border-color: var(--sel); color: var(--sel); }
+  .stream-btn.official:hover { background: var(--sel-dim); }
+  .stream-btn.alternative { border-color: var(--alt); color: var(--alt); }
+  .stream-btn.alternative:hover { background: var(--alt-dim); }
+  .stream-btn.no-stream { border-color: var(--border); color: var(--text-mono); }
+  .stream-btn.no-stream:hover { border-color: var(--text-dim); color: var(--text-dim); }
+
+  /* GROUP TABLE */
+  .groups-view { display: flex; flex-direction: column; gap: 1.2rem; }
+  .group-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .group-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .group-title .bar { flex: 1; height: 1px; background: var(--accent); opacity: 0.15; }
+  .group-table { width: 100%; border-collapse: collapse; }
+  .group-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; font-weight: 600;
+    color: var(--text-mono);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    text-align: center;
+    padding: 0.5rem 0.3rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .group-table th:first-child { text-align: left; padding-left: 0.8rem; width: 1.5rem; }
+  .group-table th:nth-child(2) { text-align: left; }
+  .group-table td {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 0.45rem 0.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .group-table tr:last-child td { border-bottom: none; }
+  .group-table td:first-child {
+    text-align: center; padding-left: 0.8rem;
+    font-weight: 700;
+    font-size: 0.65rem;
+  }
+  .group-table td:nth-child(2) {
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex; align-items: center; gap: 0.3rem;
+    padding-left: 0.3rem;
+  }
+  .group-table td .flag { font-size: 0.9rem; }
+  .group-table .pos { 
+    color: var(--text-dim); 
+    font-size: 0.6rem;
+    width: 1.2rem;
+    display: inline-block; text-align: center;
+  }
+  .group-table .pos.top3 { color: var(--accent); }
+  .group-table .pos.leader { 
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .group-table tr:first-child td { 
+    background: rgba(239,68,68,0.03);
+  }
+  .group-table td.pts { 
+    font-weight: 800; 
+    color: var(--text);
+    font-size: 0.8rem;
+    padding-right: 0.8rem;
+  }
+  .group-table td.gd-pos { color: var(--accent); font-weight: 600; }
+  .group-table td.gd-neg { color: var(--live); font-weight: 600; }
+  .group-table .stripe td { background: rgba(255,255,255,0.015); }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 1.5rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; color: var(--text-mono);
+    border-top: 1px solid var(--border);
+    margin-top: 1.5rem; letter-spacing: 0.05em;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  .loading {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+  }
+  .loading .bar {
+    display: inline-block; width: 20px; height: 2px;
+    background: var(--accent); margin-bottom: 0.6rem;
+    animation: load 1.2s ease-in-out infinite;
+    border-radius: 1px;
+  }
+  @keyframes load {
+    0%, 100% { width: 20px; opacity: 0.3; }
+    50% { width: 60px; opacity: 0.8; }
+  }
+  .error {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--live);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 0 0.5rem; }
+    header { padding: 1rem 0 0.6rem; }
+    header h1 { font-size: 1rem; }
+    .match { padding: 0.5rem 0.6rem; }
+    .match-teams { gap: 0.3rem; }
+    .team { font-size: 0.7rem; }
+    .team .flag { font-size: 0.9rem; }
+    .score { font-size: 1.1rem; }
+  }
+
+  /* HIDE */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-top">
+      <div class="header-left">
+        <span class="header-badge">fifa 2026</span>
+        <h1><span class="slash">◆</span> mundial <span class="accent">2026</span></h1>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn" data-view="all">Todos</button>
+    <button class="filter-btn active" data-view="today">Hoy</button>
+    <button class="filter-btn" data-view="groups">Grupos</button>
+  </div>
+
+  <!-- Calendar (hidden on groups) -->
+  <div id="calendarWrap"></div>
+
+  <div id="content">
+    <div class="loading"><div class="bar"></div>loading...</div>
+  </div>
+
+  <footer>
+    <span style="color:var(--accent)">◆</span> data: <a href="https://worldcup26.ir" target="_blank">worldcup26.ir</a>
+    &nbsp;·&nbsp; <span style="color:var(--accent)">◆</span> Tonen/Jcafpk
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const CFG = {
+  broadcasters: {
+    "Chile": { official: [{name:"CHV.cl",url:"https://www.chilevision.cl/"},{name:"DSports",url:"https://www.dgo.cl/"},{name:"DGO",url:"https://www.dgo.cl/"}], alternative: [] },
+    "Argentina": { official: [{name:"TyCSports",url:"https://www.tycsports.com/"},{name:"Telefe",url:"https://www.mitelefe.com/"}], alternative: [] },
+    "default": { official: [], alternative: [] }
+  },
+  byMatch: {}
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let allGames = [];
+let allTeams = {};
+let allGroups = [];
+let curView = "today";
+let curDay = null;
+
+// ============================================================
+// API
+// ============================================================
+const API = "https://worldcup26.ir";
+
+async function get(p) {
+  const r = await fetch(API + p);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+function status(m) {
+  var te = m.time_elapsed;
+  if (m.finished === "TRUE" || te === "finished") return "finished";
+  if (te === "notstarted" || te === "null" || !te) return "scheduled";
+  if (te) return "live";
+  return "scheduled";
+}
+
+function scorers(raw) {
+  if (!raw || raw === "null") return [];
+  try {
+    let s = raw.replace(/\\"/g, '"').replace(/["""]/g, '"');
+    if (s.startsWith('"') && s.endsWith('"')) return [s.slice(1, -1)];
+    if (s.startsWith('[') || s.startsWith('{')) {
+      const p = JSON.parse(s);
+      return Array.isArray(p) ? p : typeof p === 'object' ? Object.values(p) : [];
+    }
+    return s.split(',').map(x => x.trim().replace(/["{}]/g, '')).filter(Boolean);
+  } catch { return []; }
+}
+
+function fmtDate(d) {
+  if (!d) return "";
+  const [dt, tm] = d.split(" ");
+  if (!dt) return d;
+  const [m, dd] = dt.split("/");
+  return dd + "/" + m + " \u00b7 " + (tm || "");
+}
+
+function dayLbl(d) {
+  if (!d) return "";
+  const [m, dd] = d.split("/");
+  return new Date(2026, +m-1, +dd).toLocaleDateString("es-CL", { weekday:"long", day:"numeric", month:"long" });
+}
+
+function isToday(d) {
+  if (!d) return false;
+  const [m, dd] = d.split("/");
+  const dt = new Date(2026, +m-1, +dd);
+  const t = new Date();
+  return dt.getDate() === t.getDate() && dt.getMonth() === t.getMonth();
+}
+
+function teamName(id) {
+  if (allTeams[id]) return allTeams[id].team_name_en || allTeams[id].name_en || allTeams[id].name || "Team " + id;
+  return "Team " + id;
+}
+
+function teamFlag(id) {
+  if (allTeams[id]) return flag(allTeams[id].team_name_en || allTeams[id].name_en || allTeams[id].name);
+  return "\uD83C\uDFF3\uFE0F";
+}
+
+function bcast(name) {
+  const map = {
+    Chile:"Chile",Argentina:"Argentina",Brazil:"default",Uruguay:"default",
+    Paraguay:"default",Peru:"default",Colombia:"default",Ecuador:"default",
+    Venezuela:"default",Mexico:"default",USA:"default",Canada:"default",
+    Spain:"default",Germany:"default",France:"default",Italy:"default",
+    England:"default",Portugal:"default",Netherlands:"default",Belgium:"default",
+    Croatia:"default",Japan:"default","South Korea":"default",Australia:"default"
+  };
+  return CFG.broadcasters[map[name]||"default"] || CFG.broadcasters.default;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const el = document.getElementById("content");
+  try {
+    const [gData, teamsData, groupsData] = await Promise.all([
+      get("/get/games"),
+      get("/get/teams"),
+      get("/get/groups")
+    ]);
+    allGames = gData.games || [];
+    (teamsData.teams || []).forEach(t => { allTeams[t.id] = t; });
+    allGroups = groupsData.groups || [];
+
+    buildCalendar();
+    render();
+  } catch (e) {
+    el.innerHTML = "<div class=\"error\">\u26a0 error: " + e.message + "</div>";
+  }
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+function buildCalendar() {
+  var wrap = document.getElementById("calendarWrap");
+  if (!allGames.length) { wrap.innerHTML = ""; return; }
+  var days = {};
+  allGames.forEach(function(m) {
+    if (!m.local_date) return;
+    var day = m.local_date.split(" ")[0];
+    if (!days[day]) days[day] = { count: 0, live: 0 };
+    days[day].count++;
+    if (status(m) === "live") days[day].live++;
+  });
+  var sorted = Object.keys(days).sort();
+  var h = '<div class="calendar">';
+  sorted.forEach(function(d) {
+    var info = days[d];
+    var active = curDay === d ? "active" : "";
+    var today = isToday(d) ? "today" : "";
+    var dt = new Date(2026, +d.split("/")[0]-1, +d.split("/")[1]);
+    var dow = dt.toLocaleDateString("es-CL", { weekday:"short" }).replace(".","");
+    var dot = info.live > 0 ? "\u25cf " : "";
+    h += '<button class="cal-day ' + active + ' ' + today + '" data-day="' + d + '">' +
+      '<span class="dow">' + dow + '</span>' +
+      '<span class="num">' + d.split("/")[1] + '/' + d.split("/")[0] + '</span>' +
+      '<span style="font-size:0.4rem;color:var(--text-mono)">' + dot + info.count + '</span></button>';
+  });
+  h += '</div>';
+  wrap.innerHTML = h;
+
+  // Click handler
+  wrap.querySelectorAll(".cal-day").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      curDay = this.dataset.day;
+      if (curView !== "days") {
+        curView = "days";
+        document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
+      }
+      render();
+      // Update active class
+      wrap.querySelectorAll(".cal-day").forEach(function(b) { b.classList.remove("active"); });
+      this.classList.add("active");
+    });
+  });
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  var el = document.getElementById("content");
+  var cw = document.getElementById("calendarWrap");
+
+  // Groups view
+  if (curView === "groups") {
+    cw.classList.add("hidden");
+    renderGroups(el);
+    return;
+  }
+  cw.classList.remove("hidden");
+
+  var f = allGames;
+
+  if (curView === "live") {
+    f = allGames.filter(function(g) { return status(g) === "live"; });
+  } else if (curView === "today") {
+    f = allGames.filter(function(g) { return isToday(g.local_date); });
+  } else if (curView === "days" && curDay) {
+    f = allGames.filter(function(g) {
+      return g.local_date && g.local_date.split(" ")[0] === curDay;
+    });
+  }
+
+  if (!f.length) {
+    el.innerHTML = "<div class=\"loading\">\u2014 no matches \u2014</div>";
+    return;
+  }
+
+  // TODAY view: group by status
+  if (curView === "today") {
+    var live = [], fin = [], upc = [];
+    f.forEach(function(g) {
+      var s = status(g);
+      if (s === "live") live.push(g);
+      else if (s === "finished") fin.push(g);
+      else upc.push(g);
+    });
+    var html = '<div class="match-grid">';
+    var day = f[0]?.local_date?.split(" ")[0] || "";
+    html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
+    if (live.length) { html += '<div class="today-section live">\uD83D\uDD34 en vivo (' + live.length + ')</div>'; live.forEach(function(m) { html += card(m); }); }
+    if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
+    if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m); }); }
+    html += '</div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  // OTHER views: group by day
+  var grp = {};
+  f.forEach(function(g) {
+    if (!g.local_date) return;
+    var day = g.local_date.split(" ")[0];
+    if (!grp[day]) grp[day] = [];
+    grp[day].push(g);
+  });
+  var days = Object.keys(grp).sort();
+  var html = '<div class="match-grid">';
+  days.forEach(function(day) {
+    html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
+    grp[day].forEach(function(m) { html += card(m); });
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ============================================================
+// MATCH CARD
+// ============================================================
+function card(m) {
+  var s = status(m);
+  var live = s === "live";
+  var fin = s === "finished";
+  var lbl = live ? "\uD83D\uDD34 live" : fin ? "final" : "upcoming";
+  var hS = m.home_score != null ? m.home_score : "\u2013";
+  var aS = m.away_score != null ? m.away_score : "\u2013";
+  var hSc = scorers(m.home_scorers);
+  var aSc = scorers(m.away_scorers);
+  var str = CFG.byMatch[m.id];
+  var grp = m.group ? "group " + m.group : (m.type||"").replace("group","group ");
+
+  var html = '<div class="match ' + s + '">' +
+    '<div class="match-top">' +
+      '<span class="match-status ' + s + '">' + lbl + '</span>' +
+      '<span class="match-meta">' +
+        (grp ? '<span class="group-badge">' + grp + '</span><span class="sep">|</span>' : '') +
+        '<span>\uD83D\uDD50 ' + fmtDate(m.local_date) + '</span>' +
+      '</span>' +
+    '</div>';
+
+  if (live) {
+    html += '<div class="live-badge-bar"><span class="pulse-dot"></span><span class="live-text">transmitiendo ahora</span></div>';
+  }
+
+  html += '<div class="match-teams">' +
+    '<div class="team home"><span class="flag">' + flag(m.home_team_name_en) + '</span> ' + m.home_team_name_en + '</div>' +
+    '<div class="score-section">' +
+      '<div class="score ' + (live?'live-score':fin?'final-score':'') + '">' + hS + '<span class="score-sep">:</span>' + aS + '</div>' +
+      (live ? '<span class="score-label">\u25BC live</span>' : fin ? '<span class="score-label">final</span>' : '') +
+    '</div>' +
+    '<div class="team away">' + m.away_team_name_en + ' <span class="flag">' + flag(m.away_team_name_en) + '</span></div>' +
+    '</div>';
+
+  // Scorers
+  if ((hSc.length||aSc.length) && fin) {
+    var hC = hSc.map(function(x){ return x.replace(/["{}]/g,'').trim(); }).filter(Boolean);
+    var aC = aSc.map(function(x){ return x.replace(/["{}]/g,'').trim(); }).filter(Boolean);
+    if (hC.length||aC.length) {
+      html += '<div class="scorers-grid"><div class="home-scorers">' + hC.join('<br>') + '</div><div class="away-scorers">' + aC.join('<br>') + '</div></div>';
+    }
+  }
+
+  // Streams
+  html += '<div class="streams">';
+  if (str && str.length) {
+    str.forEach(function(st) {
+      var cls = st.type === "official" ? "official" : "alternative";
+      html += '<a class="stream-btn ' + cls + '" href="' + st.url + '" target="_blank" rel="noopener">' + (st.type==="official"?"\u25B6":"\u2387") + ' ' + st.name + '</a>';
+    });
+  } else {
+    var hI = bcast(m.home_team_name_en);
+    var aI = bcast(m.away_team_name_en);
+    var off = (hI?.official||[]).concat(aI?.official||[]);
+    var alt = (hI?.alternative||[]).concat(aI?.alternative||[]);
+    if (off.length||alt.length) {
+      var seen = {};
+      (off.concat(alt)).forEach(function(st) {
+        if (seen[st.name]) return; seen[st.name] = true;
+        var cls = off.indexOf(st) >= 0 ? "official" : "alternative";
+        html += '<a class="stream-btn ' + cls + '" href="' + st.url + '" target="_blank" rel="noopener">' + (off.indexOf(st)>=0?"\u25B6":"\u2387") + ' ' + st.name + '</a>';
+      });
+    } else if (live) {
+      var q = encodeURIComponent(m.home_team_name_en + ' vs ' + m.away_team_name_en + ' 2026');
+      html += '<a class="stream-btn alternative" href="https://rojadirectamas.fi/" target="_blank" rel="noopener">\u26BD Rojadirecta</a>';
+      html += '<a class="stream-btn alternative" href="https://www.youtube.com/results?search_query=' + q + '+en+vivo&sp=EgJAAQ%3D%3D" target="_blank" rel="noopener">\u25B6 YouTube</a>';
+      html += '<a class="stream-btn alternative" href="https://old.reddit.com/r/soccerstreams/search?q=' + q + '&restrict_sr=on&sort=new" target="_blank" rel="noopener">\uD83D\uDC7D Reddit</a>';
+    } else {
+      html += '<span class="stream-btn no-stream">\u2014 sin stream \u2014</span>';
+    }
+  }
+  html += '</div></div>';
+  return html;
+}
+
+// ============================================================
+// GROUPS
+// ============================================================
+function renderGroups(el) {
+  if (!allGroups.length) {
+    el.innerHTML = '<div class="loading">\u2014 no group data \u2014</div>';
+    return;
+  }
+  var html = '<div class="groups-view">';
+  allGroups.forEach(function(grp) {
+    html += '<div class="group-card">' +
+      '<div class="group-title">GRUPO ' + grp.name + '<span class="bar"></span></div>' +
+      '<table class="group-table"><tr>' +
+        '<th>#</th>' +
+        '<th style="text-align:left">Equipo</th>' +
+        '<th>PJ</th><th>G</th><th>E</th><th>P</th>' +
+        '<th>GF</th><th>GC</th><th>DG</th><th style="padding-right:0.8rem">Pts</th>' +
+      '</tr>';
+    var sorted = (grp.teams || []).slice().sort(function(a, b) {
+      if (+b.pts !== +a.pts) return +b.pts - +a.pts;
+      return +b.gd - +a.gd;
+    });
+    sorted.forEach(function(t, i) {
+      var nm = teamName(t.team_id);
+      var fl = teamFlag(t.team_id);
+      var gd = +t.gd;
+      var gdCls = gd > 0 ? "gd-pos" : gd < 0 ? "gd-neg" : "";
+      var stripe = i % 2 === 1 ? ' stripe' : '';
+      var posCls = 'pos';
+      if (i === 0) posCls += ' leader';
+      else if (i < 3) posCls += ' top3';
+      html += '<tr class="' + stripe + '">' +
+        '<td><span class="' + posCls + '">' + (i + 1) + '</span></td>' +
+        '<td style="text-align:left;padding-left:0.3rem"><span class="flag">' + fl + '</span> ' + nm + '</td>' +
+        '<td>' + t.mp + '</td>' +
+        '<td>' + t.w + '</td>' +
+        '<td>' + t.d + '</td>' +
+        '<td>' + t.l + '</td>' +
+        '<td>' + t.gf + '</td>' +
+        '<td>' + t.ga + '</td>' +
+        '<td class="' + gdCls + '">' + (gd > 0 ? "+" : "") + gd + '</td>' +
+        '<td class="pts">' + t.pts + '</td>' +
+      '</tr>';
+    });
+    html += '</table></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ============================================================
+// FLAGS
+// ============================================================
+function flag(n) {
+  var m = {
+    Mexico:"\uD83C\uDDF2\uD83C\uDDFD","South Africa":"\uD83C\uDFFF\uD83C\uDDE6","South Korea":"\uD83C\uDDF0\uD83C\uDDF7","Czech Republic":"\uD83C\uDDE8\uD83C\uDDFF",
+    Canada:"\uD83C\uDDE8\uD83C\uDDE6","Bosnia and Herzegovina":"\uD83C\uDDE7\uD83C\uDDE6",Chile:"\uD83C\uDDE8\uD83C\uDDF1",Argentina:"\uD83C\uDDE6\uD83C\uDDF7",
+    Brazil:"\uD83C\uDDE7\uD83C\uDDF7",Uruguay:"\uD83C\uDDFA\uD83C\uDDFE",Paraguay:"\uD83C\uDDF5\uD83C\uDDFE",Peru:"\uD83C\uDDF5\uD83C\uDDEA",
+    Colombia:"\uD83C\uDDE8\uD83C\uDDF4",Ecuador:"\uD83C\uDDEA\uD83C\uDDE8",Venezuela:"\uD83C\uDDFB\uD83C\uDDEA",USA:"\uD83C\uDDFA\uD83C\uDDF8",
+    England:"\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F",
+    Germany:"\uD83C\uDDE9\uD83C\uDDEA",France:"\uD83C\uDDEB\uD83C\uDDF7",Italy:"\uD83C\uDDEE\uD83C\uDDF9",Spain:"\uD83C\uDDEA\uD83C\uDDF8",
+    Portugal:"\uD83C\uDDF5\uD83C\uDDF9",Netherlands:"\uD83C\uDDF3\uD83C\uDDF1",Belgium:"\uD83C\uDDE7\uD83C\uDDEA",Croatia:"\uD83C\uDDED\uD83C\uDDF7",
+    Switzerland:"\uD83C\uDDE8\uD83C\uDDED",Denmark:"\uD83C\uDDE9\uD83C\uDDF0",Sweden:"\uD83C\uDDF8\uD83C\uDDEA",Norway:"\uD83C\uDDF3\uD83C\uDDF4",
+    Poland:"\uD83C\uDDF5\uD83C\uDDF1",Japan:"\uD83C\uDDEF\uD83C\uDDF5",Australia:"\uD83C\uDDE6\uD83C\uDDFA",Serbia:"\uD83C\uDDF7\uD83C\uDDF8",
+    Ukraine:"\uD83C\uDDFA\uD83C\uDDE6",Turkey:"\uD83C\uDDF9\uD83C\uDDF7",Austria:"\uD83C\uDDE6\uD83C\uDDF9",
+    Wales:"\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F",
+    Scotland:"\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74\uDB40\uDC7F",
+    Senegal:"\uD83C\uDDF8\uD83C\uDDF3",Nigeria:"\uD83C\uDDF3\uD83C\uDDEC",Ghana:"\uD83C\uDDEC\uD83C\uDDED",
+    Morocco:"\uD83C\uDDF2\uD83C\uDDE6",Egypt:"\uD83C\uDDEA\uD83C\uDDEC",Cameroon:"\uD83C\uDDE8\uD83C\uDDF2",
+    Tunisia:"\uD83C\uDDF9\uD83C\uDDF3",Algeria:"\uD83C\uDDE9\uD83C\uDDFF",Iran:"\uD83C\uDDEE\uD83C\uDDF7",
+    "Saudi Arabia":"\uD83C\uDDF8\uD83C\uDDE6","Costa Rica":"\uD83C\uDDE8\uD83C\uDDF7",
+    Jamaica:"\uD83C\uDDEF\uD83C\uDDF2",Panama:"\uD83C\uDDF5\uD83C\uDDE6",Iraq:"\uD83C\uDDEE\uD83C\uDDF6","New Zealand":"\uD83C\uDDF3\uD83C\uDDFF",
+    "Ivory Coast":"\uD83C\uDDE8\uD83C\uDDEE",Qatar:"\uD83C\uDDF6\uD83C\uDDE6",Cura\u00e7ao:"\uD83C\uDDE8\uD83C\uDDFC",
+    "South Korea":"\uD83C\uDDF0\uD83C\uDDF7"
+  };
+  if (m[n]) return m[n];
+  if (n === "South Korea") return "\uD83C\uDDF0\uD83C\uDDF7";
+  return "\uD83C\uDFF3\uFE0F";
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+document.getElementById("filters").addEventListener("click", function(e) {
+  if (!e.target.classList.contains("filter-btn")) return;
+  document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
+  e.target.classList.add("active");
+  curView = e.target.dataset.view;
+  curDay = null;
+  // Reset calendar active
+  var cw = document.getElementById("calendarWrap");
+  if (cw) cw.querySelectorAll(".cal-day").forEach(function(b) { b.classList.remove("active"); });
+  render();
+});
+
+init();
+</script>
+</body>
+</html>
