@@ -699,12 +699,14 @@ function fmtDate(d) {
 
 function dayLbl(d) {
   if (!d) return "";
+  d = d.split(" ")[0]; // strip time if present
   const [m, dd] = d.split("/");
   return new Date(2026, +m-1, +dd).toLocaleDateString("es-CL", { weekday:"long", day:"numeric", month:"long" });
 }
 
 function isToday(d) {
   if (!d) return false;
+  d = d.split(" ")[0]; // strip time if present
   const [m, dd] = d.split("/");
   const dt = new Date(2026, +m-1, +dd);
   const t = new Date();
