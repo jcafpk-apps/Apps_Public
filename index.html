@@ -941,7 +941,7 @@ function card(m) {
     '<div class="team home"><span class="flag">' + flag(m.home_team_name_en) + '</span> ' + m.home_team_name_en + '</div>' +
     '<div class="score-section">' +
       '<div class="score ' + (live?'live-score':fin?'final-score':'') + '">' + hS + '<span class="score-sep">:</span>' + aS + '</div>' +
-      (live ? '<span class="score-label">\u25BC en vivo</span>' : fin ? '<span class="score-label">finalizado</span>' : '') +
+      (live ? '<span class="score-label">\u25BC en vivo</span>' : '') +
     '</div>' +
     '<div class="team away">' + m.away_team_name_en + ' <span class="flag">' + flag(m.away_team_name_en) + '</span></div>' +
     '</div>';
