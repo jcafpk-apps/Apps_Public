@@ -422,6 +422,41 @@
     .score { font-size: 1.1rem; }
   }
 
+  /* DAY SECTION (lazy / collapsible) */
+  .day-section.collapsed .day-content { display: none; }
+  .day-header.toggleable { cursor: pointer; user-select: none; }
+  .day-header.toggleable:hover { opacity: 0.7; }
+  .toggle-icon { display: inline-block; transition: transform 0.2s; font-size: 0.55rem; color: var(--text-mono); margin-right: 0.3rem; }
+  .day-section.collapsed .toggle-icon { transform: rotate(-90deg); }
+  .day-content { transition: opacity 0.15s; }
+  .load-more-wrap { text-align: center; padding: 1rem 0; }
+  .load-more-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.5rem 1.5rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s;
+    border-radius: 6px;
+  }
+  .load-more-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+
+  /* API WARNING */
+  .api-warning {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    padding: 0.35rem 0.8rem;
+    margin-bottom: 0.6rem;
+    background: rgba(255,165,0,0.07);
+    border: 1px solid rgba(255,165,0,0.2);
+    color: #ffa500;
+    border-radius: 6px;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
   /* HIDE */
   .hidden { display: none !important; }
 </style>
@@ -445,6 +480,8 @@
 
   <!-- Calendar (hidden on groups) -->
   <div id="calendarWrap"></div>
+
+  <div id="api-warning" class="api-warning hidden"></div>
 
   <div id="content">
     <div class="loading"><div class="bar"></div>loading...</div>
@@ -477,6 +514,8 @@ let allTeams = {};
 let allGroups = [];
 let curView = "today";
 let curDay = null;
+let liveInterval = null;
+let dayObserver = null;
 
 // ============================================================
 // API
@@ -555,25 +594,171 @@ function bcast(name) {
 }
 
 // ============================================================
+// FALLBACK DATA (when API is down)
+// ============================================================
+const FALLBACK = {
+  games: [
+    // June 14 - Finished
+    { id:"f1", home_team_name_en:"Mexico", away_team_name_en:"Canada", home_score:2, away_score:1, time_elapsed:"finished", local_date:"06/14", group:"A", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Ra\u00fal Jim\u00e9nez 34'","Jonathan Herrera 78'"]), away_scorers:JSON.stringify(["Alphonso Davies 52'"]) },
+    { id:"f2", home_team_name_en:"Argentina", away_team_name_en:"Chile", home_score:3, away_score:0, time_elapsed:"finished", local_date:"06/14", group:"B", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Messi 12'","Lautaro Mart\u00ednez 45+2'","\u00c1ngel Di Mar\u00eda 67'"]), away_scorers:JSON.stringify([]) },
+    { id:"f3", home_team_name_en:"Brazil", away_team_name_en:"Colombia", home_score:4, away_score:1, time_elapsed:"finished", local_date:"06/14", group:"C", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Vin\u00edcius Jr. 8'","Neymar 23'","Richarlison 56'","Raphinha 79'"]), away_scorers:JSON.stringify(["Luis D\u00edaz 41'"]) },
+    { id:"f4", home_team_name_en:"France", away_team_name_en:"Netherlands", home_score:2, away_score:2, time_elapsed:"finished", local_date:"06/14", group:"D", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Kylian Mbapp\u00e9 34'","Antoine Griezmann 67'"]), away_scorers:JSON.stringify(["Memphis Depay 18'","Cody Gakpo 71'"]) },
+    { id:"f5", home_team_name_en:"England", away_team_name_en:"Spain", home_score:1, away_score:0, time_elapsed:"finished", local_date:"06/14", group:"E", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Harry Kane 63'"]), away_scorers:JSON.stringify([]) },
+    { id:"f6", home_team_name_en:"Germany", away_team_name_en:"Portugal", home_score:2, away_score:1, time_elapsed:"finished", local_date:"06/14", group:"F", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Jamal Musiala 28'","Kai Havertz 74'"]), away_scorers:JSON.stringify(["Bruno Fernandes 51'"]) },
+    { id:"f7", home_team_name_en:"Uruguay", away_team_name_en:"Ecuador", home_score:1, away_score:1, time_elapsed:"finished", local_date:"06/14", group:"G", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Darwin N\u00fa\u00f1ez 39'"]), away_scorers:JSON.stringify(["Enner Valencia 62'"]) },
+    { id:"f8", home_team_name_en:"Croatia", away_team_name_en:"Nigeria", home_score:2, away_score:0, time_elapsed:"finished", local_date:"06/14", group:"H", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Luka Modri\u0107 22'","Andrej Kramari\u0107 54'"]), away_scorers:JSON.stringify([]) },
+    { id:"f9", home_team_name_en:"USA", away_team_name_en:"Jamaica", home_score:3, away_score:0, time_elapsed:"finished", local_date:"06/14", group:"A", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Christian Pulisic 15'","Weston McKennie 33'","Folarin Balogun 78'"]), away_scorers:JSON.stringify([]) },
+    // June 15 - Live
+    { id:"f10", home_team_name_en:"Canada", away_team_name_en:"USA", home_score:1, away_score:1, time_elapsed:"72", local_date:"06/15", group:"A", type:"group_stage", home_scorers:JSON.stringify(["Jonathan David 41'"]), away_scorers:JSON.stringify(["Christian Pulisic 68'"]) },
+    { id:"f11", home_team_name_en:"Italy", away_team_name_en:"Switzerland", home_score:2, away_score:1, time_elapsed:"58", local_date:"06/15", group:"F", type:"group_stage", home_scorers:JSON.stringify(["Federico Chiesa 23'","Ciro Immobile 45+1'"]), away_scorers:JSON.stringify(["Xherdan Shaqiri 36'"]) },
+    { id:"f12", home_team_name_en:"Belgium", away_team_name_en:"Morocco", home_score:1, away_score:0, time_elapsed:"34", local_date:"06/15", group:"D", type:"group_stage", home_scorers:JSON.stringify(["Romelu Lukaku 19'"]), away_scorers:JSON.stringify([]) },
+    { id:"f13", home_team_name_en:"Senegal", away_team_name_en:"Australia", home_score:0, away_score:0, time_elapsed:"15", local_date:"06/15", group:"H", type:"group_stage", home_scorers:JSON.stringify([]), away_scorers:JSON.stringify([]) },
+    // June 15 - Scheduled (today upcoming)
+    { id:"f14", home_team_name_en:"Peru", away_team_name_en:"New Zealand", local_date:"06/15", group:"B", type:"group_stage" },
+    { id:"f15", home_team_name_en:"Paraguay", away_team_name_en:"Costa Rica", local_date:"06/15", group:"C", type:"group_stage" },
+    { id:"f16", home_team_name_en:"Scotland", away_team_name_en:"Wales", local_date:"06/15", group:"E", type:"group_stage" },
+    { id:"f17", home_team_name_en:"Japan", away_team_name_en:"South Korea", local_date:"06/15", group:"G", type:"group_stage" },
+    // June 16 - Scheduled
+    { id:"f18", home_team_name_en:"Mexico", away_team_name_en:"Jamaica", local_date:"06/16", group:"A", type:"group_stage" },
+    { id:"f19", home_team_name_en:"Argentina", away_team_name_en:"New Zealand", local_date:"06/16", group:"B", type:"group_stage" },
+    { id:"f20", home_team_name_en:"France", away_team_name_en:"Morocco", local_date:"06/16", group:"D", type:"group_stage" },
+    { id:"f21", home_team_name_en:"England", away_team_name_en:"Wales", local_date:"06/16", group:"E", type:"group_stage" },
+    // June 17 - Scheduled
+    { id:"f22", home_team_name_en:"Brazil", away_team_name_en:"Costa Rica", local_date:"06/17", group:"C", type:"group_stage" },
+    { id:"f23", home_team_name_en:"Germany", away_team_name_en:"Switzerland", local_date:"06/17", group:"F", type:"group_stage" },
+    { id:"f24", home_team_name_en:"Uruguay", away_team_name_en:"South Korea", local_date:"06/17", group:"G", type:"group_stage" }
+  ],
+  teams: {
+    "1":{id:"1",team_name_en:"USA",name:"USA"},
+    "2":{id:"2",team_name_en:"Canada",name:"Canada"},
+    "3":{id:"3",team_name_en:"Mexico",name:"Mexico"},
+    "4":{id:"4",team_name_en:"Jamaica",name:"Jamaica"},
+    "5":{id:"5",team_name_en:"Argentina",name:"Argentina"},
+    "6":{id:"6",team_name_en:"Chile",name:"Chile"},
+    "7":{id:"7",team_name_en:"Peru",name:"Peru"},
+    "8":{id:"8",team_name_en:"New Zealand",name:"New Zealand"},
+    "9":{id:"9",team_name_en:"Brazil",name:"Brazil"},
+    "10":{id:"10",team_name_en:"Colombia",name:"Colombia"},
+    "11":{id:"11",team_name_en:"Paraguay",name:"Paraguay"},
+    "12":{id:"12",team_name_en:"Costa Rica",name:"Costa Rica"},
+    "13":{id:"13",team_name_en:"France",name:"France"},
+    "14":{id:"14",team_name_en:"Netherlands",name:"Netherlands"},
+    "15":{id:"15",team_name_en:"Belgium",name:"Belgium"},
+    "16":{id:"16",team_name_en:"Morocco",name:"Morocco"},
+    "17":{id:"17",team_name_en:"England",name:"England"},
+    "18":{id:"18",team_name_en:"Spain",name:"Spain"},
+    "19":{id:"19",team_name_en:"Scotland",name:"Scotland"},
+    "20":{id:"20",team_name_en:"Wales",name:"Wales"},
+    "21":{id:"21",team_name_en:"Germany",name:"Germany"},
+    "22":{id:"22",team_name_en:"Portugal",name:"Portugal"},
+    "23":{id:"23",team_name_en:"Italy",name:"Italy"},
+    "24":{id:"24",team_name_en:"Switzerland",name:"Switzerland"},
+    "25":{id:"25",team_name_en:"Uruguay",name:"Uruguay"},
+    "26":{id:"26",team_name_en:"Ecuador",name:"Ecuador"},
+    "27":{id:"27",team_name_en:"Japan",name:"Japan"},
+    "28":{id:"28",team_name_en:"South Korea",name:"South Korea"},
+    "29":{id:"29",team_name_en:"Croatia",name:"Croatia"},
+    "30":{id:"30",team_name_en:"Nigeria",name:"Nigeria"},
+    "31":{id:"31",team_name_en:"Senegal",name:"Senegal"},
+    "32":{id:"32",team_name_en:"Australia",name:"Australia"}
+  },
+  groups: [
+    { name:"A", teams:[
+      { team_id:"1", mp:1, w:1, d:0, l:0, gf:3, ga:0, gd:3, pts:3 },
+      { team_id:"3", mp:1, w:1, d:0, l:0, gf:2, ga:1, gd:1, pts:3 },
+      { team_id:"2", mp:1, w:0, d:0, l:1, gf:1, ga:2, gd:-1, pts:0 },
+      { team_id:"4", mp:1, w:0, d:0, l:1, gf:0, ga:3, gd:-3, pts:0 }
+    ]},
+    { name:"B", teams:[
+      { team_id:"5", mp:1, w:1, d:0, l:0, gf:3, ga:0, gd:3, pts:3 },
+      { team_id:"6", mp:1, w:0, d:0, l:1, gf:0, ga:3, gd:-3, pts:0 },
+      { team_id:"7", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"8", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"C", teams:[
+      { team_id:"9", mp:1, w:1, d:0, l:0, gf:4, ga:1, gd:3, pts:3 },
+      { team_id:"10", mp:1, w:0, d:0, l:1, gf:1, ga:4, gd:-3, pts:0 },
+      { team_id:"11", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"12", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"D", teams:[
+      { team_id:"13", mp:1, w:0, d:1, l:0, gf:2, ga:2, gd:0, pts:1 },
+      { team_id:"14", mp:1, w:0, d:1, l:0, gf:2, ga:2, gd:0, pts:1 },
+      { team_id:"15", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"16", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"E", teams:[
+      { team_id:"17", mp:1, w:1, d:0, l:0, gf:1, ga:0, gd:1, pts:3 },
+      { team_id:"18", mp:1, w:0, d:0, l:1, gf:0, ga:1, gd:-1, pts:0 },
+      { team_id:"19", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"20", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"F", teams:[
+      { team_id:"21", mp:1, w:1, d:0, l:0, gf:2, ga:1, gd:1, pts:3 },
+      { team_id:"22", mp:1, w:0, d:0, l:1, gf:1, ga:2, gd:-1, pts:0 },
+      { team_id:"23", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"24", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"G", teams:[
+      { team_id:"25", mp:1, w:0, d:1, l:0, gf:1, ga:1, gd:0, pts:1 },
+      { team_id:"26", mp:1, w:0, d:1, l:0, gf:1, ga:1, gd:0, pts:1 },
+      { team_id:"27", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"28", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"H", teams:[
+      { team_id:"29", mp:1, w:1, d:0, l:0, gf:2, ga:0, gd:2, pts:3 },
+      { team_id:"30", mp:1, w:0, d:0, l:1, gf:0, ga:2, gd:-2, pts:0 },
+      { team_id:"31", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"32", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]}
+  ]
+};
+
+// ============================================================
 // INIT
 // ============================================================
 async function init() {
   const el = document.getElementById("content");
+  const warnEl = document.getElementById("api-warning");
   try {
     const [gData, teamsData, groupsData] = await Promise.all([
       get("/get/games"),
       get("/get/teams"),
       get("/get/groups")
     ]);
+    if (!gData.games || !gData.games.length || !teamsData.teams || !teamsData.teams.length || !groupsData.groups || !groupsData.groups.length) {
+      throw new Error("API returned empty data");
+    }
     allGames = gData.games || [];
     (teamsData.teams || []).forEach(t => { allTeams[t.id] = t; });
     allGroups = groupsData.groups || [];
-
-    buildCalendar();
-    render();
   } catch (e) {
-    el.innerHTML = "<div class=\"error\">\u26a0 error: " + e.message + "</div>";
+    // Use fallback data when API is down or returns empty
+    console.warn('API unavailable, using fallback data:', e.message);
+    allGames = FALLBACK.games;
+    Object.keys(FALLBACK.teams).forEach(function(k) { allTeams[k] = FALLBACK.teams[k]; });
+    allGroups = FALLBACK.groups;
+    if (warnEl) {
+      warnEl.textContent = '\u26a0 datos de muestra \u2014 API no disponible';
+      warnEl.classList.remove('hidden');
+    }
   }
+
+  // Hash-based routing: parse on load
+  parseHash();
+  // Sync filter buttons to hash
+  document.querySelectorAll(".filter-btn").forEach(function(b) {
+    b.classList.toggle("active", b.dataset.view === curView);
+  });
+  buildCalendar();
+  // Sync calendar day active
+  if (curView === 'days' && curDay) {
+    document.querySelectorAll(".cal-day").forEach(function(b) {
+      b.classList.toggle("active", b.dataset.day === curDay);
+    });
+  }
+  render();
+  syncHash();
 }
 
 // ============================================================
@@ -616,6 +801,7 @@ function buildCalendar() {
         document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
       }
       render();
+      syncHash();
       // Update active class
       wrap.querySelectorAll(".cal-day").forEach(function(b) { b.classList.remove("active"); });
       this.classList.add("active");
@@ -634,6 +820,7 @@ function render() {
   if (curView === "groups") {
     cw.classList.add("hidden");
     renderGroups(el);
+    manageLiveRefresh();
     return;
   }
   cw.classList.remove("hidden");
@@ -652,6 +839,7 @@ function render() {
 
   if (!f.length) {
     el.innerHTML = "<div class=\"loading\">\u2014 no matches \u2014</div>";
+    manageLiveRefresh();
     return;
   }
 
@@ -672,6 +860,7 @@ function render() {
     if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m); }); }
     html += '</div>';
     el.innerHTML = html;
+    manageLiveRefresh();
     return;
   }
 
@@ -684,13 +873,40 @@ function render() {
     grp[day].push(g);
   });
   var days = Object.keys(grp).sort();
+  var useLazy = curView === 'all';
+  var today = new Date();
+  var todayStr = String(today.getMonth()+1).padStart(2,'0') + '/' + String(today.getDate()).padStart(2,'0');
   var html = '<div class="match-grid">';
   days.forEach(function(day) {
-    html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
-    grp[day].forEach(function(m) { html += card(m); });
+    if (useLazy) {
+      var isPast = day < todayStr;
+      var collapsedCls = isPast ? ' collapsed' : '';
+      html += '<div class="day-section' + collapsedCls + '">' +
+        '<div class="day-header toggleable">' +
+          '<span class="toggle-icon">&#9660;</span>' +
+          dayLbl(day) + ' <span class="date">[' + day + ']</span>' +
+          '<span class="match-count" style="margin-left:auto;font-size:0.5rem;color:var(--text-mono)">' + grp[day].length + '</span>' +
+        '</div>' +
+        '<div class="day-content">';
+      grp[day].forEach(function(m) { html += card(m); });
+      html += '</div></div>';
+    } else {
+      html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
+      grp[day].forEach(function(m) { html += card(m); });
+    }
   });
   html += '</div>';
+  if (useLazy) {
+    var hasCollapsed = days.some(function(day) { return day < todayStr; });
+    if (hasCollapsed) {
+      html += '<div class="load-more-wrap"><button class="load-more-btn" id="loadMore">Cargar m&aacute;s...</button></div>';
+    }
+  }
   el.innerHTML = html;
+  if (useLazy) {
+    setupDaySections();
+  }
+  manageLiveRefresh();
 }
 
 // ============================================================
@@ -708,7 +924,7 @@ function card(m) {
   var str = CFG.byMatch[m.id];
   var grp = m.group ? "group " + m.group : (m.type||"").replace("group","group ");
 
-  var html = '<div class="match ' + s + '">' +
+  var html = '<div class="match ' + s + '" data-match-id="' + m.id + '">' +
     '<div class="match-top">' +
       '<span class="match-status ' + s + '">' + lbl + '</span>' +
       '<span class="match-meta">' +
@@ -852,6 +1068,142 @@ function flag(n) {
 }
 
 // ============================================================
+// AUTO-REFRESH (live matches)
+// ============================================================
+function currentViewHasLive() {
+  if (curView === 'live') { return allGames.some(function(g){ return status(g) === 'live'; }); }
+  if (curView === 'today') { return allGames.some(function(g){ return status(g) === 'live' && isToday(g.local_date); }); }
+  if (curView === 'days' && curDay) {
+    return allGames.some(function(g){ return status(g) === 'live' && g.local_date && g.local_date.split(" ")[0] === curDay; });
+  }
+  if (curView === 'all' || curView === 'days') {
+    return allGames.some(function(g){ return status(g) === 'live'; });
+  }
+  return false;
+}
+
+function startLiveRefresh() {
+  if (liveInterval) return;
+  liveInterval = setInterval(refreshLiveScores, 45000);
+}
+
+function stopLiveRefresh() {
+  if (liveInterval) {
+    clearInterval(liveInterval);
+    liveInterval = null;
+  }
+}
+
+async function refreshLiveScores() {
+  try {
+    var gData = await get("/get/games");
+    var games = gData.games || [];
+    var gameMap = {};
+    games.forEach(function(g) { gameMap[g.id] = g; });
+
+    var statusChanged = false;
+    allGames.forEach(function(g, i) {
+      var upd = gameMap[g.id];
+      if (!upd) return;
+      var oldSt = status(g);
+      allGames[i] = upd;
+      if (status(upd) !== oldSt) statusChanged = true;
+    });
+
+    if (statusChanged) { render(); return; }
+
+    // In-place score updates (no flicker)
+    games.forEach(function(g) {
+      var el = document.querySelector('[data-match-id="' + g.id + '"]');
+      if (!el) return;
+      var scoreEl = el.querySelector('.score');
+      if (!scoreEl) return;
+      var hS = g.home_score != null ? g.home_score : '\u2013';
+      var aS = g.away_score != null ? g.away_score : '\u2013';
+      scoreEl.innerHTML = hS + '<span class="score-sep">:</span>' + aS;
+    });
+
+    // Cleanup if no more live
+    if (!currentViewHasLive()) stopLiveRefresh();
+  } catch (e) {
+    console.error('live refresh error', e);
+  }
+}
+
+// ============================================================
+// HASH ROUTING
+// ============================================================
+function parseHash() {
+  var h = location.hash.slice(1);
+  if (h === 'all') { curView = 'all'; curDay = null; }
+  else if (h === 'today') { curView = 'today'; curDay = null; }
+  else if (h === 'groups') { curView = 'groups'; curDay = null; }
+  else if (h === 'live') { curView = 'live'; curDay = null; }
+  else if (h.indexOf('day=') === 0) { curView = 'days'; curDay = h.slice(4); }
+  // No hash or unknown → keep existing default
+}
+
+function syncHash() {
+  var hash = '';
+  if (curView === 'all') hash = '#all';
+  else if (curView === 'today') hash = '#today';
+  else if (curView === 'groups') hash = '#groups';
+  else if (curView === 'live') hash = '#live';
+  else if (curView === 'days' && curDay) hash = '#day=' + curDay;
+  var newUrl = hash || window.location.pathname;
+  if (window.location.hash !== hash) {
+    history.pushState(null, '', newUrl);
+  }
+}
+
+// ============================================================
+// LAZY DAY RENDERING (progressive enhancement for Todos view)
+// ============================================================
+function setupDaySections() {
+  // Toggle click handlers
+  document.querySelectorAll('.day-header.toggleable').forEach(function(header) {
+    header.addEventListener('click', function(e) {
+      var section = this.closest('.day-section');
+      if (!section) return;
+      section.classList.toggle('collapsed');
+    });
+  });
+
+  // IntersectionObserver: auto-expand collapsed sections on scroll
+  if (dayObserver) dayObserver.disconnect();
+  dayObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var section = entry.target;
+        section.classList.remove('collapsed');
+        dayObserver.unobserve(section);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.day-section.collapsed').forEach(function(section) {
+    dayObserver.observe(section);
+  });
+
+  // "Cargar m\u00e1s..." button
+  var loadMore = document.getElementById('loadMore');
+  if (loadMore) {
+    loadMore.addEventListener('click', function() {
+      document.querySelectorAll('.day-section.collapsed').forEach(function(s) {
+        s.classList.remove('collapsed');
+        if (dayObserver) dayObserver.unobserve(s);
+      });
+      this.style.display = 'none';
+    });
+  }
+}
+
+function manageLiveRefresh() {
+  if (currentViewHasLive()) startLiveRefresh();
+  else stopLiveRefresh();
+}
+
+// ============================================================
 // FILTERS
 // ============================================================
 document.getElementById("filters").addEventListener("click", function(e) {
@@ -864,6 +1216,20 @@ document.getElementById("filters").addEventListener("click", function(e) {
   var cw = document.getElementById("calendarWrap");
   if (cw) cw.querySelectorAll(".cal-day").forEach(function(b) { b.classList.remove("active"); });
   render();
+  syncHash();
+});
+
+window.addEventListener('popstate', function() {
+  var prevView = curView;
+  var prevDay = curDay;
+  parseHash();
+  if (curView !== prevView || curDay !== prevDay) {
+    document.querySelectorAll(".filter-btn").forEach(function(b) {
+      b.classList.toggle("active", b.dataset.view === curView);
+    });
+    buildCalendar();
+    render();
+  }
 });
 
 init();
