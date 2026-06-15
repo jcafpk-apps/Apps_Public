@@ -386,6 +386,123 @@
   .group-table td.gd-pos { color: var(--accent); font-weight: 600; }
   .group-table td.gd-neg { color: var(--live); font-weight: 600; }
   .group-table .stripe td { background: rgba(255,255,255,0.015); }
+  .group-table .qualified td {
+    background: rgba(34,197,94,0.08) !important;
+  }
+  .group-table .qualified td:first-child .pos { color: #22c55e; }
+  .group-table .qualified td:nth-child(2) { color: #22c55e; }
+  .qualified-badge {
+    display: inline-block;
+    font-size: 0.45rem;
+    color: #22c55e;
+    background: rgba(34,197,94,0.12);
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 0.3rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+
+  /* BRACKET */
+  .bracket {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.5rem 0 1rem;
+    align-items: stretch;
+    min-height: 300px;
+  }
+  .bracket-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 180px;
+    flex: 1;
+    position: relative;
+  }
+  .bracket-col:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -0.375rem;
+    top: 0;
+    bottom: 0;
+    width: 0;
+  }
+  .bracket-round-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.3rem;
+  }
+  .bracket-match {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    transition: all 0.15s;
+    position: relative;
+    line-height: 1.4;
+  }
+  .bracket-match:hover { background: var(--card-hover); }
+  .bracket-match .bm-team {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-weight: 600;
+  }
+  .bracket-match .bm-team .flag { font-size: 0.8rem; }
+  .bracket-match .bm-vs {
+    color: var(--text-mono);
+    font-weight: 400;
+    font-size: 0.55rem;
+    margin: 0 0.15rem;
+  }
+  .bracket-match .bm-tbd {
+    color: var(--text-mono);
+    font-style: italic;
+    font-weight: 400;
+  }
+  .bracket-match .bm-info {
+    font-size: 0.5rem;
+    color: var(--text-mono);
+    margin-top: 0.15rem;
+  }
+
+  /* Connector line between rounds */
+  .bracket-connector {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 1.2rem;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .bracket-connector .connector-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    position: relative;
+  }
+
+  @media (max-width: 700px) {
+    .bracket { gap: 0.4rem; }
+    .bracket-col { min-width: 140px; }
+    .bracket-match { font-size: 0.55rem; padding: 0.3rem 0.4rem; }
+    .bracket-connector { min-width: 0.6rem; }
+  }
 
   /* FOOTER */
   footer {
@@ -545,6 +662,7 @@
   <div class="filters" id="filters">
     <button class="filter-btn active" data-view="today">Hoy</button>
     <button class="filter-btn" data-view="fixture">Fixture</button>
+    <button class="filter-btn" data-view="elim">Eliminatorias</button>
     <button class="filter-btn" data-view="all">Todos</button>
     <button class="filter-btn" data-view="groups">Grupos</button>
   </div>
@@ -900,6 +1018,14 @@ function render() {
     manageLiveRefresh();
     return;
   }
+
+  // Eliminatorias view
+  if (curView === "elim") {
+    cw.classList.add("hidden");
+    renderEliminatorias(el);
+    manageLiveRefresh();
+    return;
+  }
   cw.classList.remove("hidden");
 
   var f = allGames;
@@ -1190,12 +1316,14 @@ function renderGroups(el) {
       var gd = +t.gd;
       var gdCls = gd > 0 ? "gd-pos" : gd < 0 ? "gd-neg" : "";
       var stripe = i % 2 === 1 ? ' stripe' : '';
+      var qualified = i < 2 ? ' qualified' : '';
       var posCls = 'pos';
       if (i === 0) posCls += ' leader';
       else if (i < 3) posCls += ' top3';
-      html += '<tr class="' + stripe + '">' +
+      var badge = i < 2 ? '<span class="qualified-badge">\u2713 clasificado</span>' : '';
+      html += '<tr class="' + stripe + qualified + '">' +
         '<td><span class="' + posCls + '">' + (i + 1) + '</span></td>' +
-        '<td style="text-align:left;padding-left:0.3rem"><span class="flag">' + fl + '</span> ' + nm + '</td>' +
+        '<td style="text-align:left;padding-left:0.3rem"><span class="flag">' + fl + '</span> ' + nm + badge + '</td>' +
         '<td>' + t.mp + '</td>' +
         '<td>' + t.w + '</td>' +
         '<td>' + t.d + '</td>' +
@@ -1208,6 +1336,132 @@ function renderGroups(el) {
     });
     html += '</table></div>';
   });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ============================================================
+// ELIMINATORIAS (bracket)
+// ============================================================
+function getQualifiedTeams() {
+  var q = {};
+  allGroups.forEach(function(grp) {
+    var sorted = (grp.teams || []).slice().sort(function(a, b) {
+      if (+b.pts !== +a.pts) return +b.pts - +a.pts;
+      return +b.gd - +a.gd;
+    });
+    q[grp.name] = {
+      first: sorted[0] ? sorted[0].team_id : null,
+      second: sorted[1] ? sorted[1].team_id : null
+    };
+  });
+  return q;
+}
+
+function teamStr(id) {
+  if (!id) return null;
+  return { id: id, name: teamName(id), flag: teamFlag(id) };
+}
+
+function bracketMatchHtml(home, away, label) {
+  var h = home ? '<span class="flag">' + home.flag + '</span> ' + home.name : '<span class="bm-tbd">TBD</span>';
+  var a = away ? '<span class="flag">' + away.flag + '</span> ' + away.name : '<span class="bm-tbd">TBD</span>';
+  var info = '';
+  if (!home && !away) {
+    info = '<div class="bm-info">' + label + '</div>';
+  }
+  return '<div class="bracket-match">' +
+    '<div class="bm-team">' + h + '</div>' +
+    '<div class="bm-vs">vs</div>' +
+    '<div class="bm-team">' + a + '</div>' +
+    info +
+    '</div>';
+}
+
+function renderEliminatorias(el) {
+  var q = getQualifiedTeams();
+
+  var r16pairings = [
+    { home: teamStr(q.A ? q.A.first : null), away: teamStr(q.B ? q.B.second : null), label: '1A vs 2B' },
+    { home: teamStr(q.C ? q.C.first : null), away: teamStr(q.D ? q.D.second : null), label: '1C vs 2D' },
+    { home: teamStr(q.E ? q.E.first : null), away: teamStr(q.F ? q.F.second : null), label: '1E vs 2F' },
+    { home: teamStr(q.G ? q.G.first : null), away: teamStr(q.H ? q.H.second : null), label: '1G vs 2H' },
+    { home: teamStr(q.B ? q.B.first : null), away: teamStr(q.A ? q.A.second : null), label: '1B vs 2A' },
+    { home: teamStr(q.D ? q.D.first : null), away: teamStr(q.C ? q.C.second : null), label: '1D vs 2C' },
+    { home: teamStr(q.F ? q.F.first : null), away: teamStr(q.E ? q.E.second : null), label: '1F vs 2E' },
+    { home: teamStr(q.H ? q.H.first : null), away: teamStr(q.G ? q.G.second : null), label: '1H vs 2G' }
+  ];
+
+  // QF pairings (winners of adjacent R16 pairs)
+  var qfPairings = [
+    { home: null, away: null, label: 'G1 vs G2' },
+    { home: null, away: null, label: 'G3 vs G4' },
+    { home: null, away: null, label: 'G5 vs G6' },
+    { home: null, away: null, label: 'G7 vs G8' }
+  ];
+
+  var sfPairings = [
+    { home: null, away: null, label: 'QF1 vs QF2' },
+    { home: null, away: null, label: 'QF3 vs QF4' }
+  ];
+
+  var finalMatch = { home: null, away: null, label: 'SF1 vs SF2' };
+
+  var html = '<div class="bracket">';
+
+  // R16 column
+  html += '<div class="bracket-col"><div class="bracket-round-label">\u24B7 Octavos</div>';
+  r16pairings.forEach(function(p) {
+    html += bracketMatchHtml(p.home, p.away, p.label);
+  });
+  html += '</div>';
+
+  // Connector
+  html += '<div class="bracket-connector">';
+  for (var ci = 0; ci < 4; ci++) {
+    html += '<div class="connector-group"><span style="border-top:1px solid var(--border);width:50%;position:absolute;right:0;top:50%"></span></div>';
+  }
+  // Fill remaining space to align with QF
+  for (var ci = 0; ci < 4; ci++) {
+    html += '<div class="connector-group"></div>';
+  }
+  html += '</div>';
+
+  // QF column
+  html += '<div class="bracket-col"><div class="bracket-round-label">\u00BC Cuartos</div>';
+  qfPairings.forEach(function(p) {
+    html += bracketMatchHtml(p.home, p.away, p.label);
+  });
+  html += '</div>';
+
+  // Connector
+  html += '<div class="bracket-connector">';
+  for (var ci = 0; ci < 2; ci++) {
+    html += '<div class="connector-group"><span style="border-top:1px solid var(--border);width:50%;position:absolute;right:0;top:50%"></span></div>';
+  }
+  for (var ci = 0; ci < 2; ci++) {
+    html += '<div class="connector-group"></div>';
+  }
+  html += '</div>';
+
+  // SF column
+  html += '<div class="bracket-col"><div class="bracket-round-label">\u00BD Semifinales</div>';
+  sfPairings.forEach(function(p) {
+    html += bracketMatchHtml(p.home, p.away, p.label);
+  });
+  html += '</div>';
+
+  // Connector
+  html += '<div class="bracket-connector">';
+  html += '<div class="connector-group"><span style="border-top:1px solid var(--border);width:50%;position:absolute;right:0;top:50%"></span></div>';
+  html += '<div class="connector-group"></div>';
+  html += '</div>';
+
+  // Final column
+  html += '<div class="bracket-col"><div class="bracket-round-label">\uD83C\uDFC6 Final</div>';
+  html += bracketMatchHtml(finalMatch.home, finalMatch.away, finalMatch.label);
+  html += '</div>';
+
   html += '</div>';
   el.innerHTML = html;
 }
@@ -1246,6 +1500,7 @@ function flag(n) {
 // AUTO-REFRESH (live matches)
 // ============================================================
 function currentViewHasLive() {
+  if (curView === 'elim' || curView === 'groups') return false;
   if (curView === 'live') { return allGames.some(function(g){ return status(g) === 'live'; }); }
   if (curView === 'today') { return allGames.some(function(g){ return status(g) === 'live' && isToday(g.local_date); }); }
   if (curView === 'days' && curDay) {
@@ -1313,6 +1568,7 @@ function parseHash() {
   if (h === 'all') { curView = 'all'; curDay = null; }
   else if (h === 'today') { curView = 'today'; curDay = null; }
   else if (h === 'fixture') { curView = 'fixture'; curDay = null; }
+  else if (h === 'elim') { curView = 'elim'; curDay = null; }
   else if (h === 'groups') { curView = 'groups'; curDay = null; }
   else if (h === 'live') { curView = 'live'; curDay = null; }
   else if (h.indexOf('day=') === 0) { curView = 'days'; curDay = h.slice(4); }
@@ -1324,6 +1580,7 @@ function syncHash() {
   if (curView === 'all') hash = '#all';
   else if (curView === 'today') hash = '#today';
   else if (curView === 'fixture') hash = '#fixture';
+  else if (curView === 'elim') hash = '#elim';
   else if (curView === 'groups') hash = '#groups';
   else if (curView === 'live') hash = '#live';
   else if (curView === 'days' && curDay) hash = '#day=' + curDay;
