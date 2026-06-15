@@ -916,7 +916,7 @@ function card(m) {
   var s = status(m);
   var live = s === "live";
   var fin = s === "finished";
-  var lbl = live ? "\uD83D\uDD34 live" : fin ? "final" : "upcoming";
+  var lbl = live ? "\uD83D\uDD34 en vivo" : fin ? "finalizado" : "próximo";
   var hS = m.home_score != null ? m.home_score : "\u2013";
   var aS = m.away_score != null ? m.away_score : "\u2013";
   var hSc = scorers(m.home_scorers);
