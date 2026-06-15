@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mundial 2026 · Streams</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #22d3ee;
+    --live: #ef4444;
+    --finished: #22c55e;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #334155;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 2rem 0 1.5rem;
+  }
+  header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header h1 span { color: var(--accent); }
+  header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+  /* Matches grid */
+  .match-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  /* Day separator */
+  .day-header {
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 1.5rem 0 0.5rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .day-header .date { font-weight: 400; font-size: 0.85rem; color: var(--muted); }
+
+  /* Match card */
+  .match {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .match.live { border-color: var(--live); }
+  .match.finished { border-color: var(--finished); }
+
+  .match-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .match-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+  .match-status.live { background: var(--live); color: white; }
+  .match-status.finished { background: var(--finished); color: white; }
+  .match-status.scheduled { background: #475569; color: white; }
+  .match-time {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .match-teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.8rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .team.home { justify-content: flex-start; }
+  .team.away { justify-content: flex-end; }
+  .team .flag { font-size: 1.3rem; }
+  .score {
+    font-size: 1.5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+  }
+  .score.live-score { color: var(--accent); }
+  .score:not(.live-score) { color: var(--text); }
+  .score-sep { color: var(--muted); font-size: 1.2rem; }
+  .group-badge {
+    font-size: 0.7rem;
+    color: var(--muted);
+    background: #2d3a50;
+    padding: 1px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  /* Scorers */
+  .scorers {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    padding-left: 0.3rem;
+  }
+  .scorers .home-scorers { color: var(--text); }
+  .scorers .away-scorers { color: var(--text); text-align: right; }
+  .scorers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  /* Streams section */
+  .streams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .stream-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .stream-btn.official {
+    background: #1e40af;
+    color: white;
+  }
+  .stream-btn.official:hover { background: #1d4ed8; }
+  .stream-btn.alternative {
+    background: #701a75;
+    color: white;
+  }
+  .stream-btn.alternative:hover { background: #86198f; }
+  .stream-btn.no-stream {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+    cursor: default;
+  }
+  .stream-badge {
+    font-size: 0.65rem;
+    opacity: 0.8;
+    font-weight: 400;
+  }
+
+  /* Loading & error */
+  .loading, .error {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+  }
+  .loading .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: var(--live); }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0 1rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    body { padding: 0.5rem; }
+    .match-teams { gap: 0.4rem; }
+    .team { font-size: 0.85rem; }
+    .score { font-size: 1.3rem; }
+    .match { padding: 0.8rem; }
+    .streams { gap: 0.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚽ Mundial <span>2026</span></h1>
+    <p>Partidos, resultados y dónde verlos</p>
+  </header>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="live">En Vivo</button>
+    <button class="filter-btn" data-filter="today">Hoy</button>
+  </div>
+
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      Cargando partidos…
+    </div>
+  </div>
+
+  <footer>
+    Datos: <a href="https://worldcup26.ir" target="_blank" style="color:var(--accent)">worldcup26.ir</a>
+    · Hecho por Tonen 🎯
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// STREAMS CONFIG — Edita este objeto para agregar/quitar links
+// ============================================================
+const STREAMS_CONFIG = {
+  // Broadcasters oficiales por país (mostrados como fallback)
+  broadcasters: {
+    "Chile": {
+      official: [
+        { name: "Chilevisión", url: "https://www.chilevision.cl/" },
+        { name: "DSports", url: "https://www.dgo.cl/" },
+        { name: "DGO", url: "https://www.dgo.cl/" }
+      ],
+      alternative: []
+    },
+    "Argentina": {
+      official: [
+        { name: "TyC Sports", url: "https://www.tycsports.com/" },
+        { name: "Telefe", url: "https://www.mitelefe.com/" }
+      ],
+      alternative: []
+    },
+    "default": {
+      official: [],
+      alternative: []
+    }
+  },
+
+  // Streams específicos por match ID
+  // Formato: "match_id": [ { name, url, type: "official"|"alternative" }, ... ]
+  byMatch: {}
+};
+
+// ============================================================
+// API
+// ============================================================
+const API_BASE = "https://worldcup26.ir";
+
+async function fetchAPI(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+function parseScorers(raw) {
+  if (!raw || raw === "null") return [];
+  try {
+    // Handle escaped JSON strings
+    let cleaned = raw.replace(/\\"/g, '"').replace(/“/g, '"').replace(/”/g, '"').replace(/''/g, "'");
+    // Try parsing as JSON array
+    if (cleaned.startsWith('["') || cleaned.startsWith("['") || cleaned.startsWith("{")) {
+      // It might be a JSON array or object
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) return parsed;
+      if (typeof parsed === 'object') return Object.values(parsed);
+      return [];
+    }
+    // Try splitting by comma
+    return cleaned.split(',').map(s => s.trim().replace(/"/g, '')).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function formatDate(str) {
+  // "06/11/2026 13:00"
+  if (!str) return "";
+  const [date, time] = str.split(" ");
+  if (!date) return str;
+  const [m, d, y] = date.split("/");
+  return `${d}/${m} · ${time || ""}`;
+}
+
+function getDayLabel(dateStr) {
+  if (!dateStr) return "";
+  const parts = dateStr.split("/");
+  const d = new Date(2026, parseInt(parts[0])-1, parseInt(parts[1]));
+  const today = new Date();
+  const opts = { weekday: "long", day: "numeric", month: "long" };
+  return d.toLocaleDateString("es-CL", opts);
+}
+
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  const parts = dateStr.split("/");
+  const d = new Date(2026, parseInt(parts[0])-1, parseInt(parts[1]));
+  const today = new Date();
+  return d.getDate() === today.getDate() &&
+         d.getMonth() === today.getMonth() &&
+         d.getFullYear() === today.getFullYear();
+}
+
+function getStatus(match) {
+  if (match.finished === "TRUE" || match.time_elapsed === "finished") return "finished";
+  // If time_elapsed is set and not finished, it's live
+  if (match.time_elapsed && match.time_elapsed !== "null" && match.time_elapsed !== "finished" && match.finished !== "TRUE") {
+    return "live";
+  }
+  // Check by score presence as fallback
+  if (match.home_score !== undefined && match.home_score !== null &&
+      match.away_score !== undefined && match.away_score !== null &&
+      match.finished === "TRUE") return "finished";
+  return "scheduled";
+}
+
+function getMatchStreams(matchId) {
+  const config = STREAMS_CONFIG.byMatch[matchId];
+  if (config && config.length > 0) return config;
+  return null;
+}
+
+function getBroadcasterInfo(teamName) {
+  // Try to match country by team name
+  const countryMap = {
+    "Chile": "Chile", "Argentina": "Argentina", "Brazil": "default",
+    "Uruguay": "default", "Paraguay": "default", "Peru": "default",
+    "Colombia": "default", "Ecuador": "default", "Venezuela": "default",
+    "Mexico": "default", "USA": "default", "Canada": "default",
+    "Spain": "default", "Germany": "default", "France": "default",
+    "Italy": "default", "England": "default", "Portugal": "default",
+    "Netherlands": "default", "Belgium": "default", "Croatia": "default",
+    "Japan": "default", "South Korea": "default", "Australia": "default"
+  };
+  const key = countryMap[teamName] || "default";
+  return STREAMS_CONFIG.broadcasters[key] || STREAMS_CONFIG.broadcasters.default;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+let allGames = [];
+let currentFilter = "all";
+
+function renderMatches(games, filter) {
+  const container = document.getElementById("content");
+
+  let filtered = games;
+  if (filter === "live") {
+    filtered = games.filter(g => getStatus(g) === "live");
+  } else if (filter === "today") {
+    filtered = games.filter(g => isToday(g.local_date));
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="loading" style="padding:3rem;color:var(--muted)">No hay partidos ${filter === 'live' ? 'en vivo' : filter === 'today' ? 'hoy' : ''}</div>`;
+    return;
+  }
+
+  // Group by day
+  const grouped = {};
+  filtered.forEach(g => {
+    if (!g.local_date) return;
+    const day = g.local_date.split(" ")[0]; // "06/11/2026"
+    if (!grouped[day]) grouped[day] = [];
+    grouped[day].push(g);
+  });
+
+  const sortedDays = Object.keys(grouped).sort();
+
+  let html = '<div class="match-grid">';
+  sortedDays.forEach(day => {
+    const label = getDayLabel(day);
+    const todayClass = isToday(day) ? '📅 ' : '';
+    html += `<div class="day-header">${todayClass}${label} <span class="date">${day}</span></div>`;
+
+    grouped[day].forEach(match => {
+      const status = getStatus(match);
+      const statusLabel = status === "live" ? "🔴 EN VIVO" : status === "finished" ? "✅ Finalizado" : "⏳ Programado";
+      const displayed = status === "finished";
+
+      const scoreHome = match.home_score !== undefined && match.home_score !== null ? match.home_score : "-";
+      const scoreAway = match.away_score !== undefined && match.away_score !== null ? match.away_score : "-";
+
+      const homeScorers = parseScorers(match.home_scorers);
+      const awayScorers = parseScorers(match.away_scorers);
+
+      // Streams
+      const matchStreams = getMatchStreams(match.id);
+      const hasMatchStreams = matchStreams && matchStreams.length > 0;
+
+      html += `<div class="match ${status}">
+        <div class="match-top">
+          <span class="match-status ${status}">${statusLabel}</span>
+          <span class="match-time">
+            <span>🏟️ ${match.stadium_name_en || match.stadium_id || ""}</span>
+            <span class="group-badge">${match.group ? "Grupo " + match.group : (match.type || "").replace("group","Group ")}</span>
+            <span>${formatDate(match.local_date)}</span>
+          </span>
+        </div>
+        <div class="match-teams">
+          <div class="team home"><span class="flag">${getFlag(match.home_team_name_en)}</span> ${match.home_team_name_en}</div>
+          <div class="score ${status === 'live' ? 'live-score' : ''}">${scoreHome}<span class="score-sep">–</span>${scoreAway}</div>
+          <div class="team away">${match.away_team_name_en} <span class="flag">${getFlag(match.away_team_name_en)}</span></div>
+        </div>`;
+
+      // Scorers
+      if ((homeScorers.length > 0 || awayScorers.length > 0) && displayed) {
+        html += `<div class="scorers-grid">
+          <div class="home-scorers">${homeScorers.map(s => s.replace(/["{}]/g,'')).join(', ') || ''}</div>
+          <div class="away-scorers">${awayScorers.map(s => s.replace(/["{}]/g,'')).join(', ') || ''}</div>
+        </div>`;
+      }
+
+      // Streams section
+      html += `<div class="streams">`;
+      if (hasMatchStreams) {
+        matchStreams.forEach(s => {
+          const typeClass = s.type === "official" ? "official" : "alternative";
+          const badge = s.type === "official" ? "📺" : "🔗";
+          html += `<a class="stream-btn ${typeClass}" href="${s.url}" target="_blank" rel="noopener">${badge} ${s.name}</a>`;
+        });
+      } else {
+        // Show broadcasters from relevant country
+        const hInfo = getBroadcasterInfo(match.home_team_name_en);
+        const aInfo = getBroadcasterInfo(match.away_team_name_en);
+        const allOfficial = [...(hInfo?.official || []), ...(aInfo?.official || [])];
+        const allAlt = [...(hInfo?.alternative || []), ...(aInfo?.alternative || [])];
+
+        if (allOfficial.length > 0 || allAlt.length > 0) {
+          const seen = new Set();
+          [...allOfficial, ...allAlt].forEach(s => {
+            if (seen.has(s.name)) return;
+            seen.add(s.name);
+            const typeClass = allOfficial.includes(s) ? "official" : "alternative";
+            const badge = allOfficial.includes(s) ? "📺" : "🔗";
+            html += `<a class="stream-btn ${typeClass}" href="${s.url}" target="_blank" rel="noopener">${badge} ${s.name}</a>`;
+          });
+        } else {
+          html += `<span class="stream-btn no-stream">🔍 Sin stream registrado</span>`;
+        }
+      }
+      html += `</div>`;
+
+      html += `</div>`;
+    });
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function getFlag(name) {
+  const flags = {
+    "Mexico": "🇲🇽", "South Africa": "🇿🇦", "South Korea": "🇰🇷",
+    "Czech Republic": "🇨🇿", "Canada": "🇨🇦", "Bosnia and Herzegovina": "🇧🇦",
+    "Chile": "🇨🇱", "Argentina": "🇦🇷", "Brazil": "🇧🇷", "Uruguay": "🇺🇾",
+    "Paraguay": "🇵🇾", "Peru": "🇵🇪", "Colombia": "🇨🇴", "Ecuador": "🇪🇨",
+    "Venezuela": "🇻🇪", "USA": "🇺🇸", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "Germany": "🇩🇪", "France": "🇫🇷", "Italy": "🇮🇹", "Spain": "🇪🇸",
+    "Portugal": "🇵🇹", "Netherlands": "🇳🇱", "Belgium": "🇧🇪",
+    "Croatia": "🇭🇷", "Switzerland": "🇨🇭", "Denmark": "🇩🇰",
+    "Sweden": "🇸🇪", "Norway": "🇳🇴", "Poland": "🇵🇱", "Japan": "🇯🇵",
+    "Australia": "🇦🇺", "Serbia": "🇷🇸", "Ukraine": "🇺🇦", "Turkey": "🇹🇷",
+    "Austria": "🇦🇹", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "Senegal": "🇸🇳", "Nigeria": "🇳🇬", "Ghana": "🇬🇭", "Morocco": "🇲🇦",
+    "Egypt": "🇪🇬", "Cameroon": "🇨🇲", "Tunisia": "🇹🇳", "Algeria": "🇩🇿",
+    "Iran": "🇮🇷", "Saudi Arabia": "🇸🇦", "Japan": "🇯🇵",
+    "Costa Rica": "🇨🇷", "Jamaica": "🇯🇲", "Panama": "🇵🇦"
+  };
+  return flags[name] || "🏳️";
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const container = document.getElementById("content");
+  try {
+    const data = await fetchAPI("/get/games");
+    allGames = data.games || [];
+    renderMatches(allGames, currentFilter);
+  } catch (err) {
+    container.innerHTML = `<div class="error">❌ Error cargando partidos: ${err.message}</div>`;
+  }
+}
+
+// Filters
+document.getElementById("filters").addEventListener("click", (e) => {
+  if (e.target.classList.contains("filter-btn")) {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentFilter = e.target.dataset.filter;
+    renderMatches(allGames, currentFilter);
+  }
+});
+
+init();
+</script>
+</body>
+</html>
