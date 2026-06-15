@@ -917,8 +917,8 @@ function card(m) {
   var live = s === "live";
   var fin = s === "finished";
   var lbl = live ? "\uD83D\uDD34 en vivo" : fin ? "finalizado" : "próximo";
-  var hS = m.home_score != null && m.home_score !== undefined  && m.home_score !== '' ? m.home_score : '-';
-  var aS = m.away_score != null && m.away_score !== undefined && m.away_score !== '' ? m.away_score : '-';
+  var hS = m.home_score != null && m.home_score !== 'null' && m.home_score !== '' && m.home_score !== undefined ? m.home_score : '-';
+  var aS = m.away_score != null && m.away_score !== 'null' && m.away_score !== '' && m.away_score !== undefined ? m.away_score : '-';
   var hSc = scorers(m.home_scorers);
   var aSc = scorers(m.away_scorers);
   var str = CFG.byMatch[m.id];
@@ -1118,8 +1118,8 @@ async function refreshLiveScores() {
       if (!el) return;
       var scoreEl = el.querySelector('.score');
       if (!scoreEl) return;
-      var hS = g.home_score != null ? g.home_score : '\u2013';
-      var aS = g.away_score != null ? g.away_score : '\u2013';
+      var hS = g.home_score != null && g.home_score !== 'null' ? g.home_score : '-';
+      var aS = g.away_score != null && g.away_score !== 'null' ? g.away_score : '-';
       scoreEl.innerHTML = hS + '<span class="score-sep">:</span>' + aS;
     });
 
