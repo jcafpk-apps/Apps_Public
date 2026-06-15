@@ -609,15 +609,15 @@ const FALLBACK = {
     { id:"f8", home_team_name_en:"Croatia", away_team_name_en:"Nigeria", home_score:2, away_score:0, time_elapsed:"finished", local_date:"06/14", group:"H", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Luka Modri\u0107 22'","Andrej Kramari\u0107 54'"]), away_scorers:JSON.stringify([]) },
     { id:"f9", home_team_name_en:"USA", away_team_name_en:"Jamaica", home_score:3, away_score:0, time_elapsed:"finished", local_date:"06/14", group:"A", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Christian Pulisic 15'","Weston McKennie 33'","Folarin Balogun 78'"]), away_scorers:JSON.stringify([]) },
     // June 15 - Live
-    { id:"f10", home_team_name_en:"Canada", away_team_name_en:"USA", home_score:1, away_score:1, time_elapsed:"finished", local_date:"06/15", group:"A", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Jonathan David 41'"]), away_scorers:JSON.stringify(["Christian Pulisic 68'"]) },
-    { id:"f11", home_team_name_en:"Italy", away_team_name_en:"Switzerland", home_score:2, away_score:1, time_elapsed:"finished", local_date:"06/15", group:"F", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Federico Chiesa 23'","Ciro Immobile 45+1'"]), away_scorers:JSON.stringify(["Xherdan Shaqiri 36'"]) },
-    { id:"f12", home_team_name_en:"Belgium", away_team_name_en:"Morocco", home_score:1, away_score:0, time_elapsed:"finished", local_date:"06/15", group:"D", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Romelu Lukaku 19'"]), away_scorers:JSON.stringify([]) },
-    { id:"f13", home_team_name_en:"Senegal", away_team_name_en:"Australia", home_score:0, away_score:0, time_elapsed:"finished", local_date:"06/15", group:"H", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify([]), away_scorers:JSON.stringify([]) },
+    { id:"f10", home_team_name_en:"Canada", away_team_name_en:"USA", home_score:1, away_score:1, time_elapsed:"finished", local_date:"06/15 13:00", group:"A", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Jonathan David 41'"]), away_scorers:JSON.stringify(["Christian Pulisic 68'"]) },
+    { id:"f11", home_team_name_en:"Italy", away_team_name_en:"Switzerland", home_score:2, away_score:1, time_elapsed:"finished", local_date:"06/15 14:00", group:"F", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Federico Chiesa 23'","Ciro Immobile 45+1'"]), away_scorers:JSON.stringify(["Xherdan Shaqiri 36'"]) },
+    { id:"f12", home_team_name_en:"Belgium", away_team_name_en:"Morocco", home_score:1, away_score:0, time_elapsed:"finished", local_date:"06/15 15:00", group:"D", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify(["Romelu Lukaku 19'"]), away_scorers:JSON.stringify([]) },
+    { id:"f13", home_team_name_en:"Senegal", away_team_name_en:"Australia", home_score:0, away_score:0, time_elapsed:"finished", local_date:"06/15 16:00", group:"H", type:"group_stage", finished:"TRUE", home_scorers:JSON.stringify([]), away_scorers:JSON.stringify([]) },
     // June 15 - Scheduled (today upcoming)
-    { id:"f14", home_team_name_en:"Peru", away_team_name_en:"New Zealand", local_date:"06/15", group:"B", type:"group_stage" },
-    { id:"f15", home_team_name_en:"Paraguay", away_team_name_en:"Costa Rica", local_date:"06/15", group:"C", type:"group_stage" },
-    { id:"f16", home_team_name_en:"Scotland", away_team_name_en:"Wales", local_date:"06/15", group:"E", type:"group_stage" },
-    { id:"f17", home_team_name_en:"Japan", away_team_name_en:"South Korea", local_date:"06/15", group:"G", type:"group_stage" },
+    { id:"f14", home_team_name_en:"Peru", away_team_name_en:"New Zealand", local_date:"06/15 18:00", group:"B", type:"group_stage" },
+    { id:"f15", home_team_name_en:"Paraguay", away_team_name_en:"Costa Rica", local_date:"06/15 19:00", group:"C", type:"group_stage" },
+    { id:"f16", home_team_name_en:"Scotland", away_team_name_en:"Wales", local_date:"06/15 20:00", group:"E", type:"group_stage" },
+    { id:"f17", home_team_name_en:"Japan", away_team_name_en:"South Korea", local_date:"06/15 21:00", group:"G", type:"group_stage" },
     // June 16 - Scheduled
     { id:"f18", home_team_name_en:"Mexico", away_team_name_en:"Jamaica", local_date:"06/16", group:"A", type:"group_stage" },
     { id:"f19", home_team_name_en:"Argentina", away_team_name_en:"New Zealand", local_date:"06/16", group:"B", type:"group_stage" },
@@ -855,9 +855,9 @@ function render() {
     var html = '<div class="match-grid">';
     var day = f[0]?.local_date?.split(" ")[0] || "";
     html += '<div class="day-header">' + dayLbl(day) + ' <span class="date">[' + day + ']</span></div>';
-    if (live.length) { html += '<div class="today-section live">\uD83D\uDD34 en vivo (' + live.length + ')</div>'; live.forEach(function(m) { html += card(m); }); }
-    if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
-    if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m); }); }
+    live.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (live.length) { html += '<div class="today-section live">\uD83D\uDD34 en vivo (' + live.length + ')</div>'; live.forEach(function(m) { html += card(m); }); }
+    fin.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (fin.length) { html += '<div class="today-section finished">\u2705 finalizados (' + fin.length + ')</div>'; fin.forEach(function(m) { html += card(m); }); }
+    upc.sort(function(a,b){ return (a.local_date||'').localeCompare(b.local_date||''); }); if (upc.length) { html += '<div class="today-section">\u23F3 pr\u00f3ximos (' + upc.length + ')</div>'; upc.forEach(function(m) { html += card(m); }); }
     html += '</div>';
     el.innerHTML = html;
     manageLiveRefresh();
