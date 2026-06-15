@@ -682,13 +682,11 @@ function fmtDate(d) {
   if (!dt) return d;
   const [m, dd] = dt.split("/");
   if (tm) {
-    // API returns Mountain Time (UTC-7), convert to Chile Time (CLT, UTC-4) = +3 hours
     const [hh, min] = tm.split(":").map(Number);
-    const date = new Date(2026, +m - 1, +dd, hh + 3, min || 0);
-    return String(date.getDate()).padStart(2, "0") + "/" +
-           String(date.getMonth() + 1).padStart(2, "0") + " \u00b7 " +
-           String(date.getHours()).padStart(2, "0") + ":" +
-           String(date.getMinutes()).padStart(2, "0");
+    return String(dd).padStart(2, "0") + "/" +
+           String(m).padStart(2, "0") + " \u00b7 " +
+           String(hh).padStart(2, "0") + ":" +
+           String(min || 0).padStart(2, "0");
   }
   return dd + "/" + m + " \u00b7 " + (tm || "");
 }
