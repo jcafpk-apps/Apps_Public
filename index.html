@@ -473,8 +473,8 @@
   </header>
 
   <div class="filters" id="filters">
-    <button class="filter-btn" data-view="all">Todos</button>
     <button class="filter-btn active" data-view="today">Hoy</button>
+    <button class="filter-btn" data-view="all">Todos</button>
     <button class="filter-btn" data-view="groups">Grupos</button>
   </div>
 
@@ -917,8 +917,8 @@ function card(m) {
   var live = s === "live";
   var fin = s === "finished";
   var lbl = live ? "\uD83D\uDD34 en vivo" : fin ? "finalizado" : "próximo";
-  var hS = m.home_score != null ? m.home_score : "\u2013";
-  var aS = m.away_score != null ? m.away_score : "\u2013";
+  var hS = m.home_score != null && m.home_score !== undefined  && m.home_score !== '' ? m.home_score : '-';
+  var aS = m.away_score != null && m.away_score !== undefined && m.away_score !== '' ? m.away_score : '-';
   var hSc = scorers(m.home_scorers);
   var aSc = scorers(m.away_scorers);
   var str = CFG.byMatch[m.id];
