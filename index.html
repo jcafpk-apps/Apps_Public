@@ -630,7 +630,29 @@ const CFG = {
     "Argentina": { official: [{name:"TyCSports",url:"https://www.tycsports.com/"},{name:"Telefe",url:"https://www.mitelefe.com/"}], alternative: [] },
     "default": { official: [], alternative: [] }
   },
-  byMatch: {}
+  byMatch: {
+    // 17 Junio - Partidos reales
+    f22: [
+      { name:"CHV.cl", url:"https://www.chilevision.cl/", type:"official" },
+      { name:"FIFA+", url:"https://www.fifa.com/fifaplus", type:"official" },
+      { name:"YouTube", url:"https://www.youtube.com/results?search_query=Portugal+vs+RD+Congo+en+vivo&sp=EgJAAQ%3D%3D", type:"alternative" }
+    ],
+    f23: [
+      { name:"CHV.cl", url:"https://www.chilevision.cl/", type:"official" },
+      { name:"FIFA+", url:"https://www.fifa.com/fifaplus", type:"official" },
+      { name:"YouTube", url:"https://www.youtube.com/results?search_query=England+vs+Croatia+en+vivo&sp=EgJAAQ%3D%3D", type:"alternative" }
+    ],
+    f24: [
+      { name:"Canal 13", url:"https://www.13.cl/en-vivo", type:"official" },
+      { name:"FIFA+", url:"https://www.fifa.com/fifaplus", type:"official" },
+      { name:"YouTube", url:"https://www.youtube.com/results?search_query=Ghana+vs+Panama+en+vivo&sp=EgJAAQ%3D%3D", type:"alternative" }
+    ],
+    f25: [
+      { name:"Canal 13", url:"https://www.13.cl/en-vivo", type:"official" },
+      { name:"FIFA+", url:"https://www.fifa.com/fifaplus", type:"official" },
+      { name:"YouTube", url:"https://www.youtube.com/results?search_query=Uzbekistan+vs+Colombia+en+vivo&sp=EgJAAQ%3D%3D", type:"alternative" }
+    ]
+  }
 };
 
 // ============================================================
@@ -765,10 +787,11 @@ const FALLBACK = {
     { id:"f19", home_team_name_en:"Argentina", away_team_name_en:"New Zealand", local_date:"06/16", group:"B", type:"group_stage" },
     { id:"f20", home_team_name_en:"France", away_team_name_en:"Morocco", local_date:"06/16", group:"D", type:"group_stage" },
     { id:"f21", home_team_name_en:"England", away_team_name_en:"Wales", local_date:"06/16", group:"E", type:"group_stage" },
-    // June 17 - Scheduled
-    { id:"f22", home_team_name_en:"Brazil", away_team_name_en:"Costa Rica", local_date:"06/17", group:"C", type:"group_stage" },
-    { id:"f23", home_team_name_en:"Germany", away_team_name_en:"Switzerland", local_date:"06/17", group:"F", type:"group_stage" },
-    { id:"f24", home_team_name_en:"Uruguay", away_team_name_en:"South Korea", local_date:"06/17", group:"G", type:"group_stage" }
+    // June 17 - Real matches (48 teams, 12 groups)
+    { id:"f22", home_team_name_en:"Portugal", away_team_name_en:"RD Congo", local_date:"06/17 07:00", group:"K", type:"group_stage" },
+    { id:"f23", home_team_name_en:"England", away_team_name_en:"Croatia", local_date:"06/17 10:00", group:"K", type:"group_stage" },
+    { id:"f24", home_team_name_en:"Ghana", away_team_name_en:"Panama", local_date:"06/17 12:00", group:"L", type:"group_stage" },
+    { id:"f25", home_team_name_en:"Uzbekistan", away_team_name_en:"Colombia", local_date:"06/17 15:00", group:"L", type:"group_stage" }
   ],
   teams: {
     "1":{id:"1",team_name_en:"USA",name:"USA"},
@@ -802,7 +825,11 @@ const FALLBACK = {
     "29":{id:"29",team_name_en:"Croatia",name:"Croatia"},
     "30":{id:"30",team_name_en:"Nigeria",name:"Nigeria"},
     "31":{id:"31",team_name_en:"Senegal",name:"Senegal"},
-    "32":{id:"32",team_name_en:"Australia",name:"Australia"}
+    "32":{id:"32",team_name_en:"Australia",name:"Australia"},
+    "33":{id:"33",team_name_en:"Portugal",name:"Portugal"},
+    "34":{id:"34",team_name_en:"RD Congo",name:"DR Congo"},
+    "35":{id:"35",team_name_en:"Panama",name:"Panama"},
+    "36":{id:"36",team_name_en:"Uzbekistan",name:"Uzbekistan"}
   },
   groups: [
     { name:"A", teams:[
@@ -852,6 +879,18 @@ const FALLBACK = {
       { team_id:"30", mp:1, w:0, d:0, l:1, gf:0, ga:2, gd:-2, pts:0 },
       { team_id:"31", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
       { team_id:"32", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"K", teams:[
+      { team_id:"33", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"34", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"17", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"29", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
+    ]},
+    { name:"L", teams:[
+      { team_id:"31", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"35", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"36", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 },
+      { team_id:"10", mp:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }
     ]}
   ]
 };
@@ -1363,6 +1402,7 @@ function flag(n) {
     "Saudi Arabia":"\uD83C\uDDF8\uD83C\uDDE6","Costa Rica":"\uD83C\uDDE8\uD83C\uDDF7",
     Jamaica:"\uD83C\uDDEF\uD83C\uDDF2",Panama:"\uD83C\uDDF5\uD83C\uDDE6",Iraq:"\uD83C\uDDEE\uD83C\uDDF6","New Zealand":"\uD83C\uDDF3\uD83C\uDDFF",
     "Ivory Coast":"\uD83C\uDDE8\uD83C\uDDEE",Qatar:"\uD83C\uDDF6\uD83C\uDDE6",Cura\u00e7ao:"\uD83C\uDDE8\uD83C\uDDFC",
+    "RD Congo":"\uD83C\uDDE8\uD83C\uDDE9","DR Congo":"\uD83C\uDDE8\uD83C\uDDE9",Panama:"\uD83C\uDDF5\uD83C\uDDE6",Uzbekistan:"\uD83C\uDDFA\uD83C\uDDFF",
     "South Korea":"\uD83C\uDDF0\uD83C\uDDF7"
   };
   if (m[n]) return m[n];
