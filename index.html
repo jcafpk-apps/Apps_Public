@@ -1188,13 +1188,13 @@ function card(m, isNext) {
         var cls = off.indexOf(st) >= 0 ? "official" : "alternative";
         html += '<a class="stream-btn ' + cls + '" href="' + st.url + '" target="_blank" rel="noopener">' + (off.indexOf(st)>=0?"\u25B6":"\u2387") + ' ' + st.name + '</a>';
       });
-    } else if (live) {
+    } else {
+      // Generic fallback for any match (live or scheduled)
       var q = encodeURIComponent(m.home_team_name_en + ' vs ' + m.away_team_name_en + ' 2026');
+      html += '<a class="stream-btn official" href="https://www.fifa.com/fifaplus" target="_blank" rel="noopener">\u25B6 FIFA+</a>';
       html += '<a class="stream-btn alternative" href="https://rojadirectamas.fi/" target="_blank" rel="noopener">\u26BD Rojadirecta</a>';
       html += '<a class="stream-btn alternative" href="https://www.youtube.com/results?search_query=' + q + '+en+vivo&sp=EgJAAQ%3D%3D" target="_blank" rel="noopener">\u25B6 YouTube</a>';
       html += '<a class="stream-btn alternative" href="https://old.reddit.com/r/soccerstreams/search?q=' + q + '&restrict_sr=on&sort=new" target="_blank" rel="noopener">\uD83D\uDC7D Reddit</a>';
-    } else {
-      html += '<span class="stream-btn no-stream">\u2014 sin stream \u2014</span>';
     }
   }
   html += '</div></div>';
